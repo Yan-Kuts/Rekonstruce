@@ -71,3 +71,285 @@
     <div class="modal bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
         <div class="px-8 py-6 border-b flex justify-between items-center bg-white sticky top-0">
             <h3 id="modalTitle" class="text-2xl font-semibold"></h3>
+            <button onclick="closeModal()" class="text-3xl leading-none text-gray-400 hover:text-black">×</button>
+        </div>
+        <div class="p-8 overflow-auto" id="modalContent" style="max-height: calc(90vh - 80px);"></div>
+    </div>
+</div>
+
+<script>
+    let projects = JSON.parse(localStorage.getItem('rekonstruceProjects') || '[]');
+    let currentProject = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        owner: "", 
+        address: "", 
+        client: "",
+        data: {
+            "Bourání": [],
+            "Odpadů": [],
+            "Materiálu": [],
+            "Zednické práce": [],
+            "Sanitární práce": []
+        }
+    };
+
+    // Пресети для всіх розділів
+    const presets = {
+        "Bourání": [
+            { name: "Bourání stěn – cihla", price: 400 },
+            { name: "Bourání stěn – Ytong", price: 300 },
+            { name: "Bourání stěn – beton", price: 500 },
+            { name: "Bourání stěn – sádrokarton/umakart", price: 300 },
+            { name: "Bourání obkladu", price: 400 },
+            { name: "Snímání staré barvy", price: 50 },
+            { name: "Snímání podlahy (linoleum, laminát, parkety, vinyl)", price: 200 },
+            { name: "Bourání stropu", price: 450 },
+            { name: "Demontáž oken", price: 1200 },
+            { name: "Demontáž dveří", price: 800 },
+            { name: "Bourání schodů", price: 650 },
+            { name: "Odstranění staré omítky", price: 180 }
+        ],
+        "Odpadů": [
+            { name: "Vývoz stavebního odpadu (kontejner 5m³)", price: 4500 },
+            { name: "Vývoz směsného odpadu", price: 3200 },
+            { name: "Odvoz suti na skládku", price: 1800 },
+            { name: "Likvidace nebezpečného odpadu", price: 6500 }
+        ],
+        "Materiálu": [
+            { name: "Cihly plné", price: 850 },
+            { name: "Ytongové tvárnice", price: 620 },
+            { name: "Betonová směs", price: 2800 },
+            { name: "Sádrokartonové desky", price: 420 },
+            { name: "Keramická dlažba", price: 950 },
+            { name: "Lepicí hmota + spárovka", price: 380 }
+        ],
+        "Zednické práce": [
+            { name: "Zednické práce (hrubá stavba)", price: 650 },
+            { name: "Omítání stěn", price: 280 },
+            { name: "Štukování", price: 420 },
+            { name: "Výstavba příček", price: 520 },
+            { name: "Betonáž podlahy", price: 380 }
+        ],
+        "Sanitární práce": [
+            { name: "Montáž WC + příslušenství", price: 1850 },
+            { name: "Montáž umyvadla + baterie", price: 1450 },
+            { name: "Montáž sprchového koutu", price: 3200 },
+            { name: "Montáž vany", price: 2800 },
+            { name: "Instalace vodovodního potrubí", price: 650 },
+            { name: "Instalace kanalizace", price: 720 }
+        ]
+    };
+
+    const categories = Object.keys(currentProject.data);
+
+    function renderCategoryCards() {
+        const container = document.getElementById('categoryCards');
+        container.innerHTML = '';
+        categories.forEach(cat => {
+            const count = currentProject.data[cat].length;
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-3xl shadow p-6 hover:shadow-xl transition cursor-pointer min-w-[260px]";
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-emerald-600 text-3xl mb-2"><i class="fas fa-folder"></i></div>
+                        <h4 class="text-xl font-semibold">${cat}</h4>
+                        <p class="text-sm text-gray-500">${count} položek</p>
+                    </div>
+                    <div class="text-emerald-500 text-4xl">→</div>
+                </div>
+            `;
+            card.onclick = () => openCategory(cat);
+            container.appendChild(card);
+        });
+    }
+
+    function openCategory(cat) {
+        document.getElementById('modalTitle').textContent = cat;
+        let html = `<div class="space-y-8">`;
+
+        // Пресети
+        if (presets[cat]) {
+            html += `<div class="bg-emerald-50 rounded-2xl p-6"><h5 class="font-medium mb-4 text-emerald-700">Rychlé přidání prací</h5>`;
+            presets[cat].forEach((preset, i) => {
+                html += `
+                <div class="flex justify-between items-center bg-white rounded-xl p-4 shadow-sm mb-3">
+                    <div class="flex-1 pr-4">${preset.name}</div>
+                    <div class="text-emerald-600 font-medium whitespace-nowrap">${preset.price} Kč/m²</div>
+                    <input id="presetArea${cat}${i}" type="number" step="0.01" placeholder="m²" class="w-24 mx-4 px-3 py-2 border border-gray-300 rounded-xl text-center">
+                    <button onclick="addPreset('${cat}', ${i})" class="bg-emerald-600 text-white px-6 py-2 rounded-xl hover:bg-emerald-700">Přidat</button>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Таблиця робіт
+        html += `<h5 class="font-medium text-lg mb-3">Přidané práce</h5>`;
+        html += `<table class="w-full"><thead><tr class="bg-gray-100"><th class="text-left px-4 py-3">Název</th><th class="text-center px-4 py-3">m²</th><th class="text-right px-4 py-3">Cena za m²</th><th class="text-right px-4 py-3">Celkem</th><th></th></tr></thead><tbody>`;
+
+        currentProject.data[cat].forEach((item, i) => {
+            const sum = item.area * item.price;
+            html += `<tr class="border-b hover:bg-gray-50">
+                <td class="px-4 py-3">${item.name}</td>
+                <td class="text-center">${item.area.toFixed(2)}</td>
+                <td class="text-right">${item.price} Kč</td>
+                <td class="text-right font-medium">${sum.toFixed(0)} Kč</td>
+                <td><button onclick="deleteItem('${cat}', ${i}); openCategory('${cat}');" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></td>
+            </tr>`;
+        });
+        html += `</tbody></table></div>`;
+
+        document.getElementById('modalContent').innerHTML = html;
+        document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function addPreset(cat, index) {
+        const area = parseFloat(document.getElementById(`presetArea${cat}${index}`).value);
+        if (!area || area <= 0) return alert('Zadejte plochu v m²!');
+
+        const preset = presets[cat][index];
+        currentProject.data[cat].push({ name: preset.name, area: area, price: preset.price });
+        saveCurrentProject();
+        renderCategoryCards();
+        openCategory(cat);
+    }
+
+    function deleteItem(cat, index) {
+        if (confirm('Smazat tuto položku?')) {
+            currentProject.data[cat].splice(index, 1);
+            saveCurrentProject();
+            renderCategoryCards();
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.add('hidden');
+        renderCategoryCards();
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let totalArea = 0;
+        let totalSum = 0;
+        Object.values(currentProject.data).flat().forEach(item => {
+            totalArea += item.area;
+            totalSum += item.area * item.price;
+        });
+        document.getElementById('totalArea').textContent = totalArea.toFixed(2) + ' m²';
+        document.getElementById('totalSum').textContent = totalSum.toFixed(0) + ' Kč';
+    }
+
+    function saveCurrentProject() {
+        currentProject.owner = document.getElementById('owner').value;
+        currentProject.address = document.getElementById('address').value;
+        currentProject.client = document.getElementById('client').value;
+        localStorage.setItem('rekonstruceCurrent', JSON.stringify(currentProject));
+    }
+
+    function saveProject() {
+        currentProject.owner = document.getElementById('owner').value;
+        currentProject.address = document.getElementById('address').value;
+        currentProject.client = document.getElementById('client').value || "Nepojmenovaná zakázka";
+        currentProject.date = new Date().toISOString();
+
+        const index = projects.findIndex(p => p.id === currentProject.id);
+        if (index > -1) projects[index] = currentProject;
+        else projects.push({...currentProject});
+
+        localStorage.setItem('rekonstruceProjects', JSON.stringify(projects));
+        alert(`Zakázka "${currentProject.client}" byla uložena!`);
+    }
+
+    function showHistory() {
+        if (projects.length === 0) return alert("Zatím nemáte uložené zakázky.");
+
+        let text = "Historie zakázek:\n\n";
+        projects.forEach((p, i) => {
+            const d = new Date(p.date).toLocaleDateString('cs-CZ');
+            text += `${i+1}. ${p.client || "Bez názvu"} — ${d}\n`;
+        });
+        text += "\nZadejte číslo zakázky pro načtení:";
+
+        const num = prompt(text);
+        if (num && projects[num-1]) {
+            currentProject = JSON.parse(JSON.stringify(projects[num-1]));
+            document.getElementById('owner').value = currentProject.owner || '';
+            document.getElementById('address').value = currentProject.address || '';
+            document.getElementById('client').value = currentProject.client || '';
+            renderCategoryCards();
+            updateTotals();
+        }
+    }
+
+    function newProject() {
+        if (confirm('Vytvořit nový projekt?')) {
+            currentProject = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                owner: "", address: "", client: "",
+                data: { "Bourání": [], "Odpadů": [], "Materiálu": [], "Zednické práce": [], "Sanitární práce": [] }
+            };
+            document.getElementById('owner').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('client').value = '';
+            renderCategoryCards();
+            updateTotals();
+        }
+    }
+
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const date = new Date().toLocaleDateString('cs-CZ');
+
+        doc.setFontSize(20);
+        doc.text('Rekonstruce — Kalkulačka prací', 20, 20);
+        doc.setFontSize(12);
+        doc.text(`Vlastník: ${document.getElementById('owner').value || '—'}`, 20, 35);
+        doc.text(`Adresa: ${document.getElementById('address').value || '—'}`, 20, 42);
+        doc.text(`Zakázka: ${document.getElementById('client').value || '—'}`, 20, 49);
+        doc.text(`Datum: ${date}`, 20, 56);
+
+        let y = 70;
+        Object.keys(currentProject.data).forEach(cat => {
+            if (currentProject.data[cat].length === 0) return;
+            doc.setFontSize(14);
+            doc.text(cat, 20, y);
+            y += 8;
+
+            const tableData = currentProject.data[cat].map((item, i) => [
+                i+1, item.name, item.area.toFixed(2), item.price, (item.area * item.price).toFixed(0)
+            ]);
+
+            doc.autoTable({
+                startY: y,
+                head: [['Č.', 'Název', 'm²', 'Cena/m²', 'Celkem']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [16, 185, 129] }
+            });
+            y = doc.lastAutoTable.finalY + 15;
+        });
+
+        const totalArea = Object.values(currentProject.data).flat().reduce((s,i)=>s+i.area,0);
+        const totalSum = Object.values(currentProject.data).flat().reduce((s,i)=>s+i.area*i.price,0);
+
+        doc.setFontSize(16);
+        doc.text(`Celková plocha: ${totalArea.toFixed(2)} m²`, 20, y+10);
+        doc.text(`Celková cena: ${totalSum.toFixed(0)} Kč`, 20, y+20);
+
+        doc.save(`Rekonstruce_${date}.pdf`);
+    }
+
+    // Автозбереження
+    document.querySelectorAll('#owner, #address, #client').forEach(el => {
+        el.addEventListener('input', saveCurrentProject);
+    });
+
+    // Ініціалізація
+    renderCategoryCards();
+    updateTotals();
+</script>
+</body>
+</html>

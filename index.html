@@ -10,291 +10,268 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
-        .section-title { font-size: 1.35rem; }
+        .modal { animation: modalPop 0.3s ease; }
+        @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-12">
-    <div class="max-w-5xl mx-auto p-6">
-        <div class="bg-white rounded-3xl shadow p-8 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Власник -->
-                <div>
-                    <label class="block text-sm text-gray-500 mb-1">Jméno vlastníka</label>
-                    <input id="owner" type="text" placeholder="Jan Novák" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500">
-                </div>
-                <!-- Адреса -->
-                <div class="md:col-span-2">
-                    <label class="block text-sm text-gray-500 mb-1">Adresa objektu</label>
-                    <input id="address" type="text" placeholder="Ulice 123, Město" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500">
-                </div>
+
+<div class="max-w-6xl mx-auto p-6">
+
+    <!-- ШАПКА: власник, адреса, назва -->
+    <div class="bg-white rounded-3xl shadow p-8 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div class="md:col-span-4">
+                <label class="block text-sm text-gray-500 mb-1">Jméno vlastníka</label>
+                <input id="owner" type="text" placeholder="Jan Novák" class="w-full px-5 py-3 border rounded-2xl focus:border-emerald-500 outline-none">
+            </div>
+            <div class="md:col-span-5">
+                <label class="block text-sm text-gray-500 mb-1">Adresa objektu</label>
+                <input id="address" type="text" placeholder="Ulice 123, Město" class="w-full px-5 py-3 border rounded-2xl focus:border-emerald-500 outline-none">
+            </div>
+            <div class="md:col-span-3">
+                <label class="block text-sm text-gray-500 mb-1">Název zakázky</label>
+                <input id="client" type="text" placeholder="Rekonstrukce bytu" class="w-full px-5 py-3 border rounded-2xl focus:border-emerald-500 outline-none">
             </div>
         </div>
-
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-4xl font-bold text-emerald-600 flex items-center gap-3">
-                    <i class="fas fa-hammer"></i> Rekonstruce
-                </h1>
-                <p class="text-gray-500">Kalkulačka prací — rekonstrukce</p>
-            </div>
-            <div class="text-right">
-                <input id="client" type="text" placeholder="Název zakázky" 
-                       class="px-5 py-3 border border-gray-300 rounded-2xl w-80 focus:outline-none focus:border-emerald-500">
-                <div id="date" class="text-sm text-gray-400 mt-1"></div>
-            </div>
-        </div>
-
-        <!-- Форма додавання -->
-        <div class="bg-white rounded-3xl shadow p-6 mb-10">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                <div class="md:col-span-3">
-                    <label class="block text-sm text-gray-500 mb-1">Kategorie</label>
-                    <select id="category" class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500">
-                        <option value="Bourání">Bourání</option>
-                        <option value="Odpadů">Odpadů</option>
-                        <option value="Materiálu">Materiálu</option>
-                        <option value="Zednické práce">Zednické práce</option>
-                        <option value="Sanitární práce">Sanitární práce</option>
-                    </select>
-                </div>
-                <div class="md:col-span-4">
-                    <label class="block text-sm text-gray-500 mb-1">Název práce</label>
-                    <input id="workName" type="text" placeholder="Např.: Bourání staré podlahy" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm text-gray-500 mb-1">Plocha (m²)</label>
-                    <input id="area" type="number" step="0.01" placeholder="m²" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500 text-center">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm text-gray-500 mb-1">Cena za m²</label>
-                    <input id="price" type="number" step="0.01" placeholder="Kč/m²" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500 text-center">
-                </div>
-                <div class="md:col-span-1">
-                    <button onclick="addRow()" 
-                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 rounded-2xl font-medium flex items-center justify-center gap-2">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Розділи з таблицями -->
-        <div id="sections" class="space-y-10"></div>
-
-        <!-- Загальний підсумок -->
-        <div class="bg-white rounded-3xl shadow p-8 mt-10">
-            <div class="flex justify-between items-center text-2xl">
-                <div>
-                    <span class="text-gray-500">Celková plocha:</span> 
-                    <span id="totalArea" class="font-bold text-emerald-600">0.00 m²</span>
-                </div>
-                <div>
-                    <span class="text-gray-500">Celková cena:</span> 
-                    <span id="totalSum" class="font-bold text-emerald-600">0.00 Kč</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex gap-4 mt-8">
-            <button onclick="clearAll()" 
-                    class="flex-1 bg-gray-200 hover:bg-gray-300 py-4 rounded-2xl font-medium text-lg">
-                Vymazat vše
-            </button>
-            <button onclick="generatePDF()" 
-                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-medium text-lg flex items-center justify-center gap-3">
-                <i class="fas fa-file-pdf"></i>
-                Vytvořit PDF
-            </button>
-        </div>
+        <div id="date" class="text-sm text-gray-400 mt-4 text-right"></div>
     </div>
 
-    <script>
-        let data = {
+    <!-- КАРТКИ РОЗДІЛІВ -->
+    <h2 class="text-2xl font-semibold mb-6">Kategorie prací</h2>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="categoryCards"></div>
+
+    <!-- ПІДСУМКИ -->
+    <div class="mt-12 bg-white rounded-3xl shadow p-8 flex justify-between items-center text-3xl">
+        <div>Celková plocha: <span id="totalArea" class="font-bold text-emerald-600">0.00 m²</span></div>
+        <div>Celková cena: <span id="totalSum" class="font-bold text-emerald-600">0 Kč</span></div>
+    </div>
+
+    <!-- Кнопки дій -->
+    <div class="flex gap-4 mt-8">
+        <button onclick="newProject()" class="flex-1 bg-gray-200 hover:bg-gray-300 py-5 rounded-3xl text-xl font-medium">Nový projekt</button>
+        <button onclick="showHistory()" class="flex-1 bg-gray-200 hover:bg-gray-300 py-5 rounded-3xl text-xl font-medium">Historie projektů</button>
+        <button onclick="generatePDF()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-3xl text-xl font-medium flex items-center justify-center gap-3">
+            <i class="fas fa-file-pdf"></i> Vytvořit PDF
+        </button>
+    </div>
+</div>
+
+<!-- МОДАЛЬНЕ ВІКНО РОЗДІЛУ -->
+<div id="modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="modal bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
+        <div class="px-8 py-6 border-b flex justify-between items-center">
+            <h3 id="modalTitle" class="text-2xl font-semibold"></h3>
+            <button onclick="closeModal()" class="text-3xl leading-none text-gray-400 hover:text-black">×</button>
+        </div>
+        <div class="p-8" id="modalContent"></div>
+    </div>
+</div>
+
+<script>
+    let currentProject = {
+        owner: "", address: "", client: "",
+        data: {
             "Bourání": [],
             "Odpadů": [],
             "Materiálu": [],
             "Zednické práce": [],
             "Sanitární práce": []
-        };
+        }
+    };
 
-        const categories = Object.keys(data);
+    const presetsBourani = [
+        { name: "Bourání stěn – cihla", price: 400 },
+        { name: "Bourání stěn – Ytong", price: 300 },
+        { name: "Bourání stěn – beton", price: 500 },
+        { name: "Bourání stěn – sádrokarton/umakart", price: 300 },
+        { name: "Bourání obkladu", price: 400 },
+        { name: "Snímání staré barvy", price: 50 },
+        { name: "Snímání podlahy (linoleum, laminát, parkety, vinyl)", price: 200 }
+    ];
 
-        function renderAll() {
-            const container = document.getElementById('sections');
-            container.innerHTML = '';
+    const categories = Object.keys(currentProject.data);
 
-            let grandTotalArea = 0;
-            let grandTotalSum = 0;
-
-            categories.forEach(cat => {
-                const items = data[cat];
-                let sectionArea = 0;
-                let sectionSum = 0;
-
-                const html = `
-                <div class="bg-white rounded-3xl shadow overflow-hidden">
-                    <div class="bg-emerald-600 text-white px-8 py-4 section-title font-semibold flex items-center gap-3">
-                        <i class="fas fa-folder"></i> ${cat}
+    // Рендер карток категорій
+    function renderCategoryCards() {
+        const container = document.getElementById('categoryCards');
+        container.innerHTML = '';
+        categories.forEach(cat => {
+            const count = currentProject.data[cat].length;
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-3xl shadow p-6 hover:shadow-xl transition cursor-pointer";
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-emerald-600 text-3xl mb-2"><i class="fas fa-folder"></i></div>
+                        <h4 class="text-xl font-semibold">${cat}</h4>
+                        <p class="text-sm text-gray-500">${count} položek</p>
                     </div>
-                    <table class="w-full">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-8 py-4 text-left w-12">Č.</th>
-                                <th class="px-8 py-4 text-left">Název práce</th>
-                                <th class="px-8 py-4 text-center">m²</th>
-                                <th class="px-8 py-4 text-center">Cena za m²</th>
-                                <th class="px-8 py-4 text-right">Celkem</th>
-                                <th class="w-16"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y">
-                            ${items.map((item, i) => {
-                                const sum = item.area * item.price;
-                                sectionArea += item.area;
-                                sectionSum += sum;
-                                return `
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-8 py-4">${i+1}</td>
-                                    <td class="px-8 py-4">${item.name}</td>
-                                    <td class="px-8 py-4 text-center">${item.area.toFixed(2)}</td>
-                                    <td class="px-8 py-4 text-center">${item.price.toFixed(2)}</td>
-                                    <td class="px-8 py-4 text-right font-medium">${sum.toFixed(2)} Kč</td>
-                                    <td class="px-8 py-4">
-                                        <button onclick="deleteRow('${cat}', ${i})" class="text-red-500 hover:text-red-700">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>`;
-                            }).join('')}
-                        </tbody>
-                        <tfoot class="bg-gray-50">
-                            <tr>
-                                <td colspan="2" class="px-8 py-4 font-medium text-right">Součet kategorie:</td>
-                                <td class="px-8 py-4 text-center font-bold">${sectionArea.toFixed(2)} m²</td>
-                                <td></td>
-                                <td class="px-8 py-4 text-right font-bold">${sectionSum.toFixed(2)} Kč</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <div class="text-emerald-500 text-4xl">→</div>
+                </div>
+            `;
+            card.onclick = () => openCategory(cat);
+            container.appendChild(card);
+        });
+    }
+
+    // Відкриття категорії
+    function openCategory(cat) {
+        document.getElementById('modalTitle').textContent = cat;
+        const content = document.getElementById('modalContent');
+        let html = `<div class="space-y-8">`;
+
+        // Якщо це Bourání — показуємо пресети
+        if (cat === "Bourání") {
+            html += `<div class="bg-emerald-50 rounded-2xl p-6"><h5 class="font-medium mb-4 text-emerald-700">Rychlé přidání typických prací</h5>`;
+            presetsBourani.forEach((preset, i) => {
+                html += `
+                <div class="flex justify-between items-center bg-white rounded-xl p-4 shadow-sm mb-3">
+                    <div class="flex-1">${preset.name}</div>
+                    <div class="text-emerald-600 font-medium">${preset.price} Kč/m²</div>
+                    <input id="presetArea${i}" type="number" step="0.01" placeholder="m²" class="w-24 mx-4 px-3 py-2 border rounded-xl text-center">
+                    <button onclick="addPreset('${cat}', ${i})" class="bg-emerald-600 text-white px-6 py-2 rounded-xl hover:bg-emerald-700">Přidat</button>
                 </div>`;
-
-                container.innerHTML += html;
-                grandTotalArea += sectionArea;
-                grandTotalSum += sectionSum;
             });
-
-            document.getElementById('totalArea').textContent = grandTotalArea.toFixed(2) + ' m²';
-            document.getElementById('totalSum').textContent = grandTotalSum.toFixed(2) + ' Kč';
+            html += `</div>`;
         }
 
-        function addRow() {
-            const cat = document.getElementById('category').value;
-            const name = document.getElementById('workName').value.trim();
-            const area = parseFloat(document.getElementById('area').value);
-            const price = parseFloat(document.getElementById('price').value);
+        // Таблиця робіт у категорії
+        html += `<h5 class="font-medium text-lg mb-3">Přidané práce</h5>`;
+        html += `<table class="w-full"><thead><tr class="bg-gray-100"><th class="text-left px-4 py-3">Název</th><th class="text-center px-4 py-3">m²</th><th class="text-right px-4 py-3">Cena za m²</th><th class="text-right px-4 py-3">Celkem</th><th></th></tr></thead><tbody id="modalTable">`;
+        currentProject.data[cat].forEach((item, i) => {
+            const sum = item.area * item.price;
+            html += `<tr><td class="px-4 py-3">${item.name}</td><td class="text-center">${item.area}</td><td class="text-right">${item.price} Kč</td><td class="text-right font-medium">${sum.toFixed(0)} Kč</td><td><button onclick="deleteItem('${cat}', ${i});" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`;
+        });
+        html += `</tbody></table></div>`;
 
-            if (!name || isNaN(area) || isNaN(price) || area <= 0) {
-                alert('Vyplňte název, plochu a cenu!');
-                return;
-            }
+        content.innerHTML = html;
+        document.getElementById('modal').classList.remove('hidden');
+    }
 
-            data[cat].push({ name, area, price });
-            document.getElementById('workName').value = '';
-            document.getElementById('area').value = '';
-            document.getElementById('price').value = '';
+    function addPreset(cat, index) {
+        const areaInput = document.getElementById(`presetArea${index}`);
+        const area = parseFloat(areaInput.value);
+        if (!area || area <= 0) return alert('Zadejte plochu v m²');
+        
+        const preset = presetsBourani[index];
+        currentProject.data[cat].push({ name: preset.name, area: area, price: preset.price });
+        areaInput.value = '';
+        saveToLocalStorage();
+        renderCategoryCards();
+        openCategory(cat); // оновлюємо модальне вікно
+    }
 
-            renderAll();
+    function deleteItem(cat, index) {
+        if (confirm('Smazat položku?')) {
+            currentProject.data[cat].splice(index, 1);
+            saveToLocalStorage();
+            renderCategoryCards();
+            openCategory(cat);
         }
+    }
 
-        function deleteRow(cat, index) {
-            if (confirm('Smazat tuto položku?')) {
-                data[cat].splice(index, 1);
-                renderAll();
-            }
+    function closeModal() {
+        document.getElementById('modal').classList.add('hidden');
+        renderCategoryCards();
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let totalArea = 0;
+        let totalSum = 0;
+        Object.values(currentProject.data).flat().forEach(item => {
+            totalArea += item.area;
+            totalSum += item.area * item.price;
+        });
+        document.getElementById('totalArea').textContent = totalArea.toFixed(2) + ' m²';
+        document.getElementById('totalSum').textContent = totalSum.toFixed(0) + ' Kč';
+    }
+
+    function saveToLocalStorage() {
+        currentProject.owner = document.getElementById('owner').value;
+        currentProject.address = document.getElementById('address').value;
+        currentProject.client = document.getElementById('client').value;
+        localStorage.setItem('rekonstruceCurrent', JSON.stringify(currentProject));
+    }
+
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('rekonstruceCurrent');
+        if (saved) {
+            currentProject = JSON.parse(saved);
+            document.getElementById('owner').value = currentProject.owner || '';
+            document.getElementById('address').value = currentProject.address || '';
+            document.getElementById('client').value = currentProject.client || '';
         }
+        renderCategoryCards();
+        updateTotals();
+    }
 
-        function clearAll() {
-            if (confirm('Vymazat všechny kategorie?')) {
-                categories.forEach(cat => data[cat] = []);
-                renderAll();
-            }
+    function newProject() {
+        if (confirm('Vytvořit nový projekt? (aktuální bude uložen do historie)')) {
+            saveToLocalStorage();
+            currentProject = { owner: "", address: "", client: "", data: { "Bourání": [], "Odpadů": [], "Materiálu": [], "Zednické práce": [], "Sanitární práce": [] } };
+            document.getElementById('owner').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('client').value = '';
+            saveToLocalStorage();
+            renderCategoryCards();
+            updateTotals();
         }
+    }
 
-        function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const owner = document.getElementById('owner').value || 'Neuvedeno';
-            const address = document.getElementById('address').value || 'Neuvedeno';
-            const client = document.getElementById('client').value || 'Zakázka';
-            const date = new Date().toLocaleDateString('cs-CZ');
+    function showHistory() {
+        alert('Historie projektů bude brzy rozšířena. Zatím se vše automaticky ukládá v prohlížeči.');
+        // Можна розширити пізніше
+    }
 
-            // Заголовок
-            doc.setFontSize(20);
-            doc.text('Rekonstruce — Kalkulačka prací', 20, 20);
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const date = new Date().toLocaleDateString('cs-CZ');
 
-            // Інформація про власника та адресу
-            doc.setFontSize(12);
-            doc.text(`Vlastník: ${owner}`, 20, 35);
-            doc.text(`Adresa: ${address}`, 20, 42);
-            doc.text(`Zakázka: ${client}`, 20, 49);
-            doc.text(`Datum: ${date}`, 20, 56);
+        doc.setFontSize(20);
+        doc.text('Rekonstruce — Kalkulačka prací', 20, 20);
+        doc.setFontSize(12);
+        doc.text(`Vlastník: ${document.getElementById('owner').value || '—'}`, 20, 35);
+        doc.text(`Adresa: ${document.getElementById('address').value || '—'}`, 20, 42);
+        doc.text(`Zakázka: ${document.getElementById('client').value || '—'}`, 20, 49);
+        doc.text(`Datum: ${date}`, 20, 56);
 
-            let y = 70;
+        let y = 70;
+        Object.keys(currentProject.data).forEach(cat => {
+            if (currentProject.data[cat].length === 0) return;
+            doc.setFontSize(14);
+            doc.text(cat, 20, y);
+            y += 8;
 
-            categories.forEach(cat => {
-                if (data[cat].length === 0) return;
+            const tableData = currentProject.data[cat].map((item, i) => [
+                i + 1, item.name, item.area.toFixed(2), item.price.toFixed(0), (item.area * item.price).toFixed(0)
+            ]);
 
-                doc.setFontSize(14);
-                doc.text(cat, 20, y);
-                y += 8;
-
-                const tableData = data[cat].map((item, i) => [
-                    i + 1,
-                    item.name,
-                    item.area.toFixed(2),
-                    item.price.toFixed(2),
-                    (item.area * item.price).toFixed(2)
-                ]);
-
-                doc.autoTable({
-                    startY: y,
-                    head: [['Č.', 'Název práce', 'm²', 'Cena za m²', 'Celkem']],
-                    body: tableData,
-                    theme: 'striped',
-                    headStyles: { fillColor: [16, 185, 129] },
-                    margin: { left: 20, right: 20 }
-                });
-
-                y = doc.lastAutoTable.finalY + 15;
-            });
-
-            const totalArea = Object.values(data).flat().reduce((sum, i) => sum + i.area, 0);
-            const totalSum = Object.values(data).flat().reduce((sum, i) => sum + i.area * i.price, 0);
-
-            doc.setFontSize(16);
-            doc.text(`Celková plocha: ${totalArea.toFixed(2)} m²`, 20, y + 10);
-            doc.text(`Celková cena: ${totalSum.toFixed(2)} Kč`, 20, y + 20);
-
-            doc.save(`Rekonstruce_${client.replace(/[^a-zA-Z0-9]/g, '_')}_${date}.pdf`);
-        }
-
-        // Поточна дата
-        document.getElementById('date').textContent = new Date().toLocaleDateString('cs-CZ', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            doc.autoTable({ startY: y, head: [['Č.', 'Název', 'm²', 'Cena/m²', 'Celkem']], body: tableData, theme: 'striped', headStyles: { fillColor: [16, 185, 129] } });
+            y = doc.lastAutoTable.finalY + 15;
         });
 
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addRow();
-        });
+        const totalArea = Object.values(currentProject.data).flat().reduce((s, i) => s + i.area, 0);
+        const totalSum = Object.values(currentProject.data).flat().reduce((s, i) => s + i.area * i.price, 0);
 
-        renderAll();
-    </script>
+        doc.setFontSize(16);
+        doc.text(`Celková plocha: ${totalArea.toFixed(2)} m²`, 20, y + 10);
+        doc.text(`Celková cena: ${totalSum.toFixed(0)} Kč`, 20, y + 20);
+
+        doc.save(`Rekonstruce_${date}.pdf`);
+    }
+
+    // Автозбереження при зміні полів
+    document.querySelectorAll('#owner, #address, #client').forEach(el => {
+        el.addEventListener('input', saveToLocalStorage);
+    });
+
+    // Ініціалізація
+    document.getElementById('date').textContent = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    loadFromLocalStorage();
+    setInterval(saveToLocalStorage, 3000); // кожні 3 секунди автосейв
+</script>
 </body>
 </html>

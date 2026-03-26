@@ -3,217 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rekonstruce — Kalkulačka prací</title>
+  <title>Rekonstruce — Kompletní kalkulačka</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .karta {
-      transition: all 0.2s ease;
-    }
-    .karta:hover {
-      border-color: #4ade80;
-      transform: translateY(-4px);
-      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    }
-    .icon-box {
-      transition: all 0.2s ease;
-    }
-    .karta:hover .icon-box {
-      background-color: #bbf7d0;
-    }
+    .karta { transition: all 0.25s ease; }
+    .karta:hover { border-color: #4ade80; transform: translateY(-6px); box-shadow: 0 15px 25px -5px rgb(0 0 0 / 0.1); }
+    .icon-box { transition: all 0.25s ease; }
+    .karta:hover .icon-box { background-color: #bbf7d0; transform: scale(1.08); }
+    .modal { animation: modalPop 0.3s ease; }
+    @keyframes modalPop { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .checkbox:checked + label { text-decoration: line-through; color: #6b7280; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-  <div class="max-w-5xl mx-auto bg-white shadow-lg min-h-screen">
+  <div class="max-w-6xl mx-auto bg-white shadow-2xl min-h-screen">
 
-    <!-- Header / Tabs (як на скріншоті) -->
-    <div class="border-b bg-white sticky top-0 z-10">
-      <div class="flex items-center justify-between px-6 py-3 text-sm">
-        <div class="flex gap-6 text-gray-600">
-          <a href="#" class="hover:text-gray-900">Nová zakázka</a>
-          <a href="#" class="hover:text-gray-900">Historie zakázek</a>
-        </div>
-        <div class="flex items-center gap-4 text-xs text-gray-500">
-          <span>Čt 26. 3. 2026</span>
-        </div>
+    <!-- Header -->
+    <div class="border-b bg-white sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-green-700">Rekonstruce</h1>
+      <div class="flex gap-8 text-sm font-medium text-gray-600">
+        <a href="#" class="text-green-600 border-b-2 border-green-600 pb-1">Nová zakázka</a>
+        <a href="#" class="hover:text-gray-900">Historie</a>
+        <a href="#" class="hover:text-gray-900">Ceník</a>
       </div>
     </div>
 
-    <div class="p-6">
+    <div class="p-8">
 
-      <!-- Верхні поля -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <!-- Інформація про об'єкт -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div>
-          <label class="block text-sm text-gray-600 mb-1">Jméno vlastníka</label>
-          <input type="text" value="Jan Novák" 
-                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500">
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Jméno vlastníka</label>
+          <input type="text" value="Jan Novák" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
         </div>
         <div>
-          <label class="block text-sm text-gray-600 mb-1">Adresa objektu</label>
-          <input type="text" value="Ulice 123, Město" 
-                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500">
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Adresa objektu</label>
+          <input type="text" value="Ulice 123, Město" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
         </div>
         <div>
-          <label class="block text-sm text-gray-600 mb-1">Název zakázky</label>
-          <input type="text" value="Rekonstrukce bytu" 
-                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500">
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Název zakázky</label>
+          <input type="text" value="Kompletní rekonstrukce bytu 3+1" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
         </div>
       </div>
 
-      <!-- Секція Категорії праці -->
-      <div class="mb-8">
-        <div class="flex justify-between items-center mb-5">
-          <h2 class="text-xl font-semibold text-gray-800">Kategorie prací</h2>
-          
-          <button onclick="ulozitZakazku()" 
-                  class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2 2 2 0 01-2 2v-9a2 2 0 012-2 2 2 0 01-2-2z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14v6m-3-3h6" />
-            </svg>
-            Uložit zakázku
+      <!-- Категорії -->
+      <div class="mb-12">
+        <div class="flex justify-between items-end mb-6">
+          <h2 class="text-2xl font-semibold text-gray-800">Kategorie prací</h2>
+          <button onclick="ulozitZakazku()" class="flex items-center gap-3 bg-green-600 hover:bg-green-700 text-white px-8 py-3.5 rounded-2xl font-medium transition-all">
+            💾 Uložit zakázku
           </button>
         </div>
 
-        <!-- Grid з 7 категоріями -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="kategorie-grid">
-
-          <!-- Bourání -->
-          <div onclick="vybratKategorii(this)" class="karta bg-white border-2 border-gray-200 rounded-2xl p-5 text-center cursor-pointer">
-            <div class="icon-box w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-              🏗️
-            </div>
-            <h3 class="font-semibold text-gray-800">Bourání</h3>
-            <p class="text-sm text-gray-500 mt-2" id="count-bourani">0 položek</p>
-          </div>
-
-          <!-- Odpadů -->
-          <div onclick="vybratKategorii(this)" class="karta bg-white border-2 border-gray-200 rounded-2xl p-5 text-center cursor-pointer">
-            <div class="icon-box w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-              🗑️
-            </div>
-            <h3 class="font-semibold text-gray-800">Odpadů</h3>
-            <p class="text-sm text-gray-500 mt-2" id="count-odpadu">0 položek</p>
-          </div>
-
-          <!-- Materiálu -->
-          <div onclick="vybratKategorii(this)" class="karta bg-white border-2 border-gray-200 rounded-2xl p-5 text-center cursor-pointer">
-            <div class="icon-box w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-              📦
-            </div>
-            <h3 class="font-semibold text-gray-800">Materiálu</h3>
-            <p class="text-sm text-gray-500 mt-2" id="count-materialu">0 položek</p>
-          </div>
-
-          <!-- Zednické práce -->
-          <div onclick="vybratKategorii(this)" class="karta bg-white border-2 border-gray-200 rounded-2xl p-5 text-center cursor-pointer">
-            <div class="icon-box w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-              🧱
-            </div>
-            <h3 class="font-semibold text-gray-800">Zednické práce</h3>
-            <p class="text-sm text-gray-500 mt-2" id="count-zednicke">0 položek</p>
-          </div>
-
-          <!-- Obklady (нова) -->
-          <div onclick="vybratKategorii(this)" class="karta bg-white border-2 border-gray-200 rounded-2xl p-5 text-center cursor-pointer">
-            <div class="icon-box w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-              🏠
-            </div>
-            <h3 class="font-semibold text-gray-800">Obklady</h3>
-            <p class="text-sm text-gray-500 mt-2" id="count-obklady">0 položek</p>
-          </div>
-
-          <!-- Kompletace (нова) -->
-          <div onclick="vybratKategorii(this)" class="karta bg-white border-2 border-gray-200 rounded-2xl p-5 text-center cursor-pointer">
-            <div class="icon-box w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-              🔧
-            </div>
-            <h3 class="font-semibold text-gray-800">Kompletace</h3>
-            <p class="text-sm text-gray-500 mt-2" id="count-kompletace">0 položek</p>
-          </div>
-
-          <!-- Doprava (нова) -->
-          <div onclick="vybratKategorii(this)" class="karta bg-white border-2 border-gray-200 rounded-2xl p-5 text-center cursor-pointer">
-            <div class="icon-box w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-              🚚
-            </div>
-            <h3 class="font-semibold text-gray-800">Doprava</h3>
-            <p class="text-sm text-gray-500 mt-2" id="count-doprava">0 položek</p>
-          </div>
-
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5" id="kategorie-grid">
+          <!-- Категорії заповнюються через JS -->
         </div>
       </div>
 
       <!-- Підсумки -->
-      <div class="grid grid-cols-2 gap-6 mb-8">
-        <div class="bg-gray-100 rounded-2xl p-6">
-          <p class="text-gray-600 text-sm">Celková plocha</p>
-          <p class="text-3xl font-semibold text-green-600 mt-1">0.00 m²</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-3xl p-8">
+          <p class="text-gray-500 text-sm">Celková plocha</p>
+          <p id="total-area" class="text-5xl font-bold text-green-600 mt-2">0.00 m²</p>
         </div>
-        <div class="bg-gray-100 rounded-2xl p-6">
-          <p class="text-gray-600 text-sm">Celková cena</p>
-          <p class="text-3xl font-semibold text-green-600 mt-1">0 Kč</p>
+        <div class="bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-3xl p-8">
+          <p class="text-gray-500 text-sm">Celková cena</p>
+          <p id="total-price" class="text-5xl font-bold text-green-600 mt-2">0 Kč</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-3xl p-8 flex flex-col justify-center">
+          <p class="text-sm text-gray-500">Počet aktivních položek</p>
+          <p id="total-items" class="text-4xl font-semibold text-gray-800 mt-1">0</p>
         </div>
       </div>
 
       <!-- Нижні кнопки -->
       <div class="flex flex-wrap gap-4">
-        <button onclick="novyProjekt()" 
-                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-4 rounded-2xl transition-colors">
-          Nový projekt
-        </button>
-        
-        <button onclick="zobrazitHistorii()" 
-                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-4 rounded-2xl transition-colors">
-          Historie zakázek
-        </button>
-        
-        <button onclick="vytvoritPDF()" 
-                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-4 rounded-2xl flex items-center justify-center gap-3 transition-colors">
-          <span>Vytvořit PDF</span>
-          <span class="text-xl">📄</span>
+        <button onclick="novyProjekt()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-5 rounded-3xl font-medium text-lg">Nový projekt</button>
+        <button onclick="zobrazitHistorii()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-5 rounded-3xl font-medium text-lg">Historie zakázek</button>
+        <button onclick="vytvoritPDF()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-5 rounded-3xl font-medium text-lg flex items-center justify-center gap-3">
+          Vytvořit PDF 📄
         </button>
       </div>
+    </div>
+  </div>
 
+  <!-- Модальне вікно -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+    <div class="modal bg-white rounded-3xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="px-8 py-6 border-b flex items-center justify-between bg-gray-50">
+        <div id="modal-header" class="flex items-center gap-4 text-2xl"></div>
+        <button onclick="zavritModal()" class="text-4xl text-gray-400 hover:text-gray-600 leading-none">×</button>
+      </div>
+      
+      <div class="flex-1 p-8 overflow-auto" id="modal-content">
+        <!-- Заповнюється JS -->
+      </div>
+
+      <div class="border-t p-6 flex gap-4">
+        <button onclick="pridatVlastniPolozku()" 
+                class="flex-1 border border-dashed border-gray-400 hover:border-green-500 text-gray-600 hover:text-green-600 py-4 rounded-2xl font-medium">
+          + Přidat vlastní položku
+        </button>
+        <button onclick="zavritModal()" 
+                class="flex-1 bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-medium">
+          Hotovo
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
-    function vybratKategorii(el) {
-      // Знімаємо виділення з усіх
-      document.querySelectorAll('.karta').forEach(card => {
-        card.classList.remove('border-green-500', 'ring-2', 'ring-green-500');
-      });
-      // Додаємо виділення
-      el.classList.add('border-green-500', 'ring-2', 'ring-green-500');
+    let totalPrice = 0;
+    let totalArea = 0;
+    let totalItems = 0;
+
+    const kategorieData = [
+      { id: 0, nazev: "Bourání", icon: "🏗️", color: "red", podkategorie: [
+        "Bourání příček a nenosných stěn", "Demontáž starých podlah", "Odstranění obkladů a dlažby", 
+        "Demontáž dveří a zárubní", "Demontáž oken", "Vybourání bytového jádra", "Odstranění starých radiátorů",
+        "Bourání stropních podhledů", "Demontáž kuchyňské linky", "Vyklizení a odvoz nábytku"
+      ]},
+      { id: 1, nazev: "Odpadů", icon: "🗑️", color: "amber", podkategorie: [
+        "Odvoz stavební sutě kontejnerem", "Tříděný odvoz odpadu", "Likvidace nebezpečného odpadu", 
+        "Úklid po bouracích pracích", "Vícenásobný odvoz", "Pronájem kontejneru 5–10 m³"
+      ]},
+      { id: 2, nazev: "Materiálu", icon: "📦", color: "blue", podkategorie: [
+        "Nákup cihel a tvárnic", "Cement, písek, štuk", "Omítkové směsi", "Lepicí a stěrkové hmoty", 
+        "Izolační materiály", "Doprava materiálu na stavbu", "Nákup sádrokartonu a profilů"
+      ]},
+      { id: 3, nazev: "Zednické práce", icon: "🧱", color: "orange", podkategorie: [
+        "Výstavba nových příček", "Omítání stěn a stropů", "Štukování", "Vyrovnávání podlah (anhydrit / cementový potěr)",
+        "Sanace vlhkého zdiva", "Zednické úpravy šachet", "Montáž sádrokartonových podhledů"
+      ]},
+      { id: 4, nazev: "Obklady", icon: "🏠", color: "emerald", podkategorie: [
+        "Obklady stěn v koupelně", "Pokládka dlažby na podlahu", "Obklady kuchyně", "Velkoformátové obklady",
+        "Řezání a montáž", "Spárování a silikonování", "Obklady schodů"
+      ]},
+      { id: 5, nazev: "Elektroinstalace", icon: "⚡", color: "yellow", podkategorie: [
+        "Nové rozvody elektřiny", "Montáž zásuvek a vypínačů", "Instalace osvětlení", "Revize elektroinstalace",
+        "Montáž rozvodných skříní", "Příprava pro chytrý dům", "Zemnicí a jističe"
+      ]},
+      { id: 6, nazev: "Instalatérské práce", icon: "🚰", color: "cyan", podkategorie: [
+        "Nové rozvody vody a odpadu", "Montáž sanity (vana, sprcha, WC, umyvadlo)", "Instalace bojleru",
+        "Příprava pro pračku a myčku", "Výměna stoupaček", "Tlaková zkouška"
+      ]},
+      { id: 7, nazev: "Topení a VZT", icon: "🔥", color: "rose", podkategorie: [
+        "Výměna radiátorů", "Instalace podlahového vytápění", "Montáž klimatizace", "Vzduchotechnika",
+        "Komínové práce", "Topenářské revize"
+      ]},
+      { id: 8, nazev: "Podlahy", icon: "🪵", color: "amber", podkategorie: [
+        "Pokládka plovoucí podlahy", "Vinylová / laminátová podlaha", "Koberce", "Broušení a lakování parket",
+        "Izolace proti hluku a vlhkosti", "Montáž soklových lišt"
+      ]},
+      { id: 9, nazev: "Malování a dokončování", icon: "🎨", color: "violet", podkategorie: [
+        "Výmalba stěn a stropů", "Škrábání starých nátěrů", "Nátěr radiátorů", "Montáž interiérových dveří",
+        "Montáž lišt, parapetů a soklů", "Finální úpravy"
+      ]},
+      { id: 10, nazev: "Doprava a úklid", icon: "🚚", color: "slate", podkategorie: [
+        "Doprava materiálu", "Finální úklid po rekonstrukci", "Odvoz nábytku", "Generální úklid",
+        "Manipulace s těžkými předměty"
+      ]}
+    ];
+
+    function renderKategorie() {
+      const container = document.getElementById('kategorie-grid');
+      container.innerHTML = '';
       
-      console.log('Вибрано:', el.querySelector('h3').textContent);
-      // Тут можна відкривати форму для додавання робіт у цю категорію
-    }
-
-    function ulozitZakazku() {
-      alert('Zakázka uložena! ✅');
-    }
-
-    function novyProjekt() {
-      if (confirm('Vytvořit nový projekt?')) {
-        location.reload();
-      }
-    }
-
-    function zobrazitHistorii() {
-      alert('Zatím žádná historie...');
-    }
-
-    function vytvoritPDF() {
-      alert('PDF se generuje... 📄');
-    }
-
-    // Приклад: оновлення кількості (можна викликати після додавання робіт)
-    function aktualizovatPocet(id, pocet) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = pocet + ' položek';
-    }
-  </script>
-</body>
-</html>
+      kategorieData.forEach(kat => {
+        const div = document.createElement('div');
+        div.className = `karta bg-white border-2 border-gray-200 rounded-3xl p-6 text-center cursor-pointer`;
+        div.innerHTML = `
+          <div class="icon-box w-16 h-16 bg-green-100 text-4xl rounded

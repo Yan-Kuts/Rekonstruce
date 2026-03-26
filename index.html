@@ -1,1 +1,281 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekonstruce — Калькулятор робіт</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .section-title { font-size: 1.35rem; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-12">
+    <div class="max-w-5xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-emerald-600 flex items-center gap-3">
+                    <i class="fas fa-hammer"></i> Rekonstruce
+                </h1>
+                <p class="text-gray-500">Калькулятор робіт — реконструкція</p>
+            </div>
+            <div class="text-right">
+                <input id="client" type="text" placeholder="Назва об'єкта / Замовник" 
+                       class="px-5 py-3 border border-gray-300 rounded-2xl w-96 focus:outline-none focus:border-emerald-500">
+                <div id="date" class="text-sm text-gray-400 mt-1"></div>
+            </div>
+        </div>
 
+        <!-- Форма додавання -->
+        <div class="bg-white rounded-3xl shadow p-6 mb-10">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <div class="md:col-span-3">
+                    <label class="block text-sm text-gray-500 mb-1">Розділ</label>
+                    <select id="category" class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500">
+                        <option value="Bourání">Bourání (Демонтаж)</option>
+                        <option value="Odpadů">Odpadů (Вивіз відходів)</option>
+                        <option value="Materiálu">Materiálu (Матеріали)</option>
+                        <option value="Zednické práce">Zednické práce (Мулярські роботи)</option>
+                        <option value="Sanitární práce">Sanitární práce (Санітарні роботи)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-sm text-gray-500 mb-1">Назва роботи</label>
+                    <input id="workName" type="text" placeholder="Наприклад: Зняття старої підлоги" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-gray-500 mb-1">Площа (м²)</label>
+                    <input id="area" type="number" step="0.01" placeholder="м²" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500 text-center">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-gray-500 mb-1">Ціна за м²</label>
+                    <input id="price" type="number" step="0.01" placeholder="грн/м²" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500 text-center">
+                </div>
+                <div class="md:col-span-1">
+                    <button onclick="addRow()" 
+                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 rounded-2xl font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Розділи з таблицями -->
+        <div id="sections" class="space-y-10"></div>
+
+        <!-- Загальний підсумок -->
+        <div class="bg-white rounded-3xl shadow p-8 mt-10">
+            <div class="flex justify-between items-center text-2xl">
+                <div>
+                    <span class="text-gray-500">Загальна площа:</span> 
+                    <span id="totalArea" class="font-bold text-emerald-600">0.00 м²</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Загальна сума:</span> 
+                    <span id="totalSum" class="font-bold text-emerald-600">0.00 грн</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-8">
+            <button onclick="clearAll()" 
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 py-4 rounded-2xl font-medium text-lg">
+                Очистити все
+            </button>
+            <button onclick="generatePDF()" 
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-medium text-lg flex items-center justify-center gap-3">
+                <i class="fas fa-file-pdf"></i>
+                Зберегти як PDF
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let data = {
+            "Bourání": [],
+            "Odpadů": [],
+            "Materiálu": [],
+            "Zednické práce": [],
+            "Sanitární práce": []
+        };
+
+        const categories = Object.keys(data);
+
+        function renderAll() {
+            const container = document.getElementById('sections');
+            container.innerHTML = '';
+
+            let grandTotalArea = 0;
+            let grandTotalSum = 0;
+
+            categories.forEach(cat => {
+                const items = data[cat];
+                let sectionArea = 0;
+                let sectionSum = 0;
+
+                const html = `
+                <div class="bg-white rounded-3xl shadow overflow-hidden">
+                    <div class="bg-emerald-600 text-white px-8 py-4 section-title font-semibold flex items-center gap-3">
+                        <i class="fas fa-folder"></i> ${cat}
+                    </div>
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-8 py-4 text-left w-12">№</th>
+                                <th class="px-8 py-4 text-left">Назва роботи</th>
+                                <th class="px-8 py-4 text-center">м²</th>
+                                <th class="px-8 py-4 text-center">Ціна за м²</th>
+                                <th class="px-8 py-4 text-right">Сума</th>
+                                <th class="w-16"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            ${items.map((item, i) => {
+                                const sum = item.area * item.price;
+                                sectionArea += item.area;
+                                sectionSum += sum;
+                                return `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-8 py-4">${i+1}</td>
+                                    <td class="px-8 py-4">${item.name}</td>
+                                    <td class="px-8 py-4 text-center">${item.area.toFixed(2)}</td>
+                                    <td class="px-8 py-4 text-center">${item.price.toFixed(2)}</td>
+                                    <td class="px-8 py-4 text-right font-medium">${sum.toFixed(2)} грн</td>
+                                    <td class="px-8 py-4">
+                                        <button onclick="deleteRow('${cat}', ${i})" class="text-red-500 hover:text-red-700">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <td colspan="2" class="px-8 py-4 font-medium text-right">Підсумок розділу:</td>
+                                <td class="px-8 py-4 text-center font-bold">${sectionArea.toFixed(2)} м²</td>
+                                <td></td>
+                                <td class="px-8 py-4 text-right font-bold">${sectionSum.toFixed(2)} грн</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>`;
+
+                container.innerHTML += html;
+
+                grandTotalArea += sectionArea;
+                grandTotalSum += sectionSum;
+            });
+
+            document.getElementById('totalArea').textContent = grandTotalArea.toFixed(2) + ' м²';
+            document.getElementById('totalSum').textContent = grandTotalSum.toFixed(2) + ' грн';
+        }
+
+        function addRow() {
+            const cat = document.getElementById('category').value;
+            const name = document.getElementById('workName').value.trim();
+            const area = parseFloat(document.getElementById('area').value);
+            const price = parseFloat(document.getElementById('price').value);
+
+            if (!name || isNaN(area) || isNaN(price) || area <= 0) {
+                alert('Будь ласка, заповніть назву, площу та ціну!');
+                return;
+            }
+
+            data[cat].push({ name, area, price });
+
+            // очищаємо поля
+            document.getElementById('workName').value = '';
+            document.getElementById('area').value = '';
+            document.getElementById('price').value = '';
+
+            renderAll();
+        }
+
+        function deleteRow(cat, index) {
+            if (confirm('Видалити цю позицію?')) {
+                data[cat].splice(index, 1);
+                renderAll();
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Очистити ВСІ розділи?')) {
+                categories.forEach(cat => data[cat] = []);
+                renderAll();
+            }
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const client = document.getElementById('client').value || 'Обʼєкт';
+            const date = new Date().toLocaleDateString('uk-UA');
+
+            doc.setFontSize(20);
+            doc.text('Rekonstruce — Калькулятор робіт', 20, 20);
+
+            doc.setFontSize(12);
+            doc.text(`Об'єкт: ${client}`, 20, 32);
+            doc.text(`Дата: ${date}`, 20, 40);
+
+            let y = 55;
+
+            categories.forEach(cat => {
+                if (data[cat].length === 0) return;
+
+                doc.setFontSize(14);
+                doc.text(cat, 20, y);
+                y += 8;
+
+                const tableData = data[cat].map((item, i) => [
+                    i + 1,
+                    item.name,
+                    item.area.toFixed(2),
+                    item.price.toFixed(2),
+                    (item.area * item.price).toFixed(2)
+                ]);
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['№', 'Назва', 'м²', 'Ціна за м²', 'Сума']],
+                    body: tableData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [16, 185, 129] },
+                    margin: { left: 20, right: 20 }
+                });
+
+                y = doc.lastAutoTable.finalY + 12;
+            });
+
+            const totalArea = Object.values(data).flat().reduce((sum, i) => sum + i.area, 0);
+            const totalSum = Object.values(data).flat().reduce((sum, i) => sum + i.area * i.price, 0);
+
+            doc.setFontSize(16);
+            doc.text(`Загальна площа: ${totalArea.toFixed(2)} м²`, 20, y + 10);
+            doc.text(`Загальна вартість: ${totalSum.toFixed(2)} грн`, 20, y + 20);
+
+            doc.save(`Rekonstruce_${client.replace(/[^a-zA-Z0-9]/g, '_')}_${date}.pdf`);
+        }
+
+        // Ініціалізація
+        document.getElementById('date').textContent = new Date().toLocaleDateString('uk-UA', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+
+        // Додаємо по Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addRow();
+        });
+
+        // Перший рендер
+        renderAll();
+    </script>
+</body>
+</html>

@@ -11,8 +11,7 @@
     .icon-box { transition: all 0.25s ease; }
     .karta:hover .icon-box { background-color: #bbf7d0; transform: scale(1.08); }
     .modal { animation: modalPop 0.3s ease; }
-    @keyframes modalPop { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-    .checkbox:checked + label { text-decoration: line-through; color: #6b7280; }
+    @keyframes modalPop { from { opacity: 0; transform: scale(0.92) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -25,7 +24,6 @@
       <div class="flex gap-8 text-sm font-medium text-gray-600">
         <a href="#" class="text-green-600 border-b-2 border-green-600 pb-1">Nová zakázka</a>
         <a href="#" class="hover:text-gray-900">Historie</a>
-        <a href="#" class="hover:text-gray-900">Ceník</a>
       </div>
     </div>
 
@@ -35,15 +33,15 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Jméno vlastníka</label>
-          <input type="text" value="Jan Novák" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
+          <input type="text" id="owner" value="Jan Novák" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Adresa objektu</label>
-          <input type="text" value="Ulice 123, Město" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
+          <input type="text" id="address" value="Ulice 123, Město" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Název zakázky</label>
-          <input type="text" value="Kompletní rekonstrukce bytu 3+1" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
+          <input type="text" id="zakazka" value="Kompletní rekonstrukce bytu 3+1" class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-green-500">
         </div>
       </div>
 
@@ -51,13 +49,13 @@
       <div class="mb-12">
         <div class="flex justify-between items-end mb-6">
           <h2 class="text-2xl font-semibold text-gray-800">Kategorie prací</h2>
-          <button onclick="ulozitZakazku()" class="flex items-center gap-3 bg-green-600 hover:bg-green-700 text-white px-8 py-3.5 rounded-2xl font-medium transition-all">
+          <button onclick="ulozitZakazku()" class="flex items-center gap-3 bg-green-600 hover:bg-green-700 text-white px-8 py-3.5 rounded-2xl font-medium">
             💾 Uložit zakázku
           </button>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5" id="kategorie-grid">
-          <!-- Категорії заповнюються через JS -->
+          <!-- Заповнюється JS -->
         </div>
       </div>
 
@@ -72,15 +70,32 @@
           <p id="total-price" class="text-5xl font-bold text-green-600 mt-2">0 Kč</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-3xl p-8 flex flex-col justify-center">
-          <p class="text-sm text-gray-500">Počet aktivních položek</p>
+          <p class="text-sm text-gray-500">Aktivních položek</p>
           <p id="total-items" class="text-4xl font-semibold text-gray-800 mt-1">0</p>
+        </div>
+      </div>
+
+      <!-- Таблиця вибраних робіт -->
+      <div class="mb-12">
+        <h3 class="text-xl font-semibold mb-4 text-gray-800">Vybrané práce</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse bg-white rounded-3xl overflow-hidden">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-6 py-4 text-left font-medium text-gray-600">Kategorie</th>
+                <th class="px-6 py-4 text-left font-medium text-gray-600">Položka</th>
+                <th class="px-6 py-4 text-right font-medium text-gray-600">Cena</th>
+                <th class="px-6 py-4 w-20"></th>
+              </tr>
+            </thead>
+            <tbody id="selected-table" class="divide-y"></tbody>
+          </table>
         </div>
       </div>
 
       <!-- Нижні кнопки -->
       <div class="flex flex-wrap gap-4">
         <button onclick="novyProjekt()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-5 rounded-3xl font-medium text-lg">Nový projekt</button>
-        <button onclick="zobrazitHistorii()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-5 rounded-3xl font-medium text-lg">Historie zakázek</button>
         <button onclick="vytvoritPDF()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-5 rounded-3xl font-medium text-lg flex items-center justify-center gap-3">
           Vytvořit PDF 📄
         </button>
@@ -90,19 +105,17 @@
 
   <!-- Модальне вікно -->
   <div id="modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
-    <div class="modal bg-white rounded-3xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+    <div class="modal bg-white rounded-3xl w-full max-w-2xl mx-4 max-h-[92vh] overflow-hidden flex flex-col">
       <div class="px-8 py-6 border-b flex items-center justify-between bg-gray-50">
-        <div id="modal-header" class="flex items-center gap-4 text-2xl"></div>
-        <button onclick="zavritModal()" class="text-4xl text-gray-400 hover:text-gray-600 leading-none">×</button>
+        <div id="modal-header" class="flex items-center gap-4 text-2xl font-semibold"></div>
+        <button onclick="zavritModal()" class="text-4xl text-gray-400 hover:text-gray-600">×</button>
       </div>
       
-      <div class="flex-1 p-8 overflow-auto" id="modal-content">
-        <!-- Заповнюється JS -->
-      </div>
+      <div class="flex-1 p-8 overflow-auto" id="modal-content"></div>
 
-      <div class="border-t p-6 flex gap-4">
+      <div class="border-t p-6 flex gap-4 bg-gray-50">
         <button onclick="pridatVlastniPolozku()" 
-                class="flex-1 border border-dashed border-gray-400 hover:border-green-500 text-gray-600 hover:text-green-600 py-4 rounded-2xl font-medium">
+                class="flex-1 border-2 border-dashed border-gray-400 hover:border-green-500 text-gray-600 hover:text-green-700 py-4 rounded-2xl font-medium transition-colors">
           + Přidat vlastní položku
         </button>
         <button onclick="zavritModal()" 
@@ -115,63 +128,258 @@
 
   <script>
     let totalPrice = 0;
-    let totalArea = 0;
     let totalItems = 0;
+    let selectedItems = [];   // {catId, itemIndex, categoryName, name, price}
+    let prices = {};          // ключ: "catId-itemIndex"
 
     const kategorieData = [
-      { id: 0, nazev: "Bourání", icon: "🏗️", color: "red", podkategorie: [
-        "Bourání příček a nenosných stěn", "Demontáž starých podlah", "Odstranění obkladů a dlažby", 
-        "Demontáž dveří a zárubní", "Demontáž oken", "Vybourání bytového jádra", "Odstranění starých radiátorů",
-        "Bourání stropních podhledů", "Demontáž kuchyňské linky", "Vyklizení a odvoz nábytku"
-      ]},
-      { id: 1, nazev: "Odpadů", icon: "🗑️", color: "amber", podkategorie: [
-        "Odvoz stavební sutě kontejnerem", "Tříděný odvoz odpadu", "Likvidace nebezpečného odpadu", 
-        "Úklid po bouracích pracích", "Vícenásobný odvoz", "Pronájem kontejneru 5–10 m³"
-      ]},
-      { id: 2, nazev: "Materiálu", icon: "📦", color: "blue", podkategorie: [
-        "Nákup cihel a tvárnic", "Cement, písek, štuk", "Omítkové směsi", "Lepicí a stěrkové hmoty", 
-        "Izolační materiály", "Doprava materiálu na stavbu", "Nákup sádrokartonu a profilů"
-      ]},
-      { id: 3, nazev: "Zednické práce", icon: "🧱", color: "orange", podkategorie: [
-        "Výstavba nových příček", "Omítání stěn a stropů", "Štukování", "Vyrovnávání podlah (anhydrit / cementový potěr)",
-        "Sanace vlhkého zdiva", "Zednické úpravy šachet", "Montáž sádrokartonových podhledů"
-      ]},
-      { id: 4, nazev: "Obklady", icon: "🏠", color: "emerald", podkategorie: [
-        "Obklady stěn v koupelně", "Pokládka dlažby na podlahu", "Obklady kuchyně", "Velkoformátové obklady",
-        "Řezání a montáž", "Spárování a silikonování", "Obklady schodů"
-      ]},
-      { id: 5, nazev: "Elektroinstalace", icon: "⚡", color: "yellow", podkategorie: [
-        "Nové rozvody elektřiny", "Montáž zásuvek a vypínačů", "Instalace osvětlení", "Revize elektroinstalace",
-        "Montáž rozvodných skříní", "Příprava pro chytrý dům", "Zemnicí a jističe"
-      ]},
-      { id: 6, nazev: "Instalatérské práce", icon: "🚰", color: "cyan", podkategorie: [
-        "Nové rozvody vody a odpadu", "Montáž sanity (vana, sprcha, WC, umyvadlo)", "Instalace bojleru",
-        "Příprava pro pračku a myčku", "Výměna stoupaček", "Tlaková zkouška"
-      ]},
-      { id: 7, nazev: "Topení a VZT", icon: "🔥", color: "rose", podkategorie: [
-        "Výměna radiátorů", "Instalace podlahového vytápění", "Montáž klimatizace", "Vzduchotechnika",
-        "Komínové práce", "Topenářské revize"
-      ]},
-      { id: 8, nazev: "Podlahy", icon: "🪵", color: "amber", podkategorie: [
-        "Pokládka plovoucí podlahy", "Vinylová / laminátová podlaha", "Koberce", "Broušení a lakování parket",
-        "Izolace proti hluku a vlhkosti", "Montáž soklových lišt"
-      ]},
-      { id: 9, nazev: "Malování a dokončování", icon: "🎨", color: "violet", podkategorie: [
-        "Výmalba stěn a stropů", "Škrábání starých nátěrů", "Nátěr radiátorů", "Montáž interiérových dveří",
-        "Montáž lišt, parapetů a soklů", "Finální úpravy"
-      ]},
-      { id: 10, nazev: "Doprava a úklid", icon: "🚚", color: "slate", podkategorie: [
-        "Doprava materiálu", "Finální úklid po rekonstrukci", "Odvoz nábytku", "Generální úklid",
-        "Manipulace s těžkými předměty"
-      ]}
+      { id: 0, nazev: "Bourání", icon: "🏗️", podkategorie: ["Bourání příček a nenosných stěn", "Demontáž starých podlah", "Odstranění obkladů a dlažby", "Demontáž dveří a zárubní", "Demontáž oken", "Vybourání bytového jádra"]},
+      { id: 1, nazev: "Odpadů", icon: "🗑️", podkategorie: ["Odvoz stavební sutě kontejnerem", "Tříděný odvoz odpadu", "Pronájem kontejneru"]},
+      { id: 2, nazev: "Materiálu", icon: "📦", podkategorie: ["Cement, písek, štuk", "Omítkové směsi", "Sádrokarton a profily", "Izolační materiály"]},
+      { id: 3, nazev: "Zednické práce", icon: "🧱", podkategorie: ["Výstavba nových příček", "Omítání stěn a stropů", "Štukování", "Vyrovnávání podlah"]},
+      { id: 4, nazev: "Obklady", icon: "🏠", podkategorie: ["Obklady stěn v koupelně", "Pokládka dlažby", "Obklady kuchyně", "Spárování"]},
+      { id: 5, nazev: "Elektroinstalace", icon: "⚡", podkategorie: ["Nové rozvody elektřiny", "Montáž zásuvek a vypínačů", "Instalace osvětlení"]},
+      { id: 6, nazev: "Instalatérské práce", icon: "🚰", podkategorie: ["Nové rozvody vody a odpadu", "Montáž sanity", "Instalace bojleru"]},
+      { id: 7, nazev: "Topení a VZT", icon: "🔥", podkategorie: ["Výměna radiátorů", "Podlahové vytápění", "Montáž klimatizace"]},
+      { id: 8, nazev: "Podlahy", icon: "🪵", podkategorie: ["Pokládka plovoucí podlahy", "Vinylová podlaha", "Montáž soklů"]},
+      { id: 9, nazev: "Malování a dokončování", icon: "🎨", podkategorie: ["Výmalba stěn a stropů", "Montáž interiérových dveří", "Montáž lišt"]},
+      { id: 10, nazev: "Doprava a úklid", icon: "🚚", podkategorie: ["Doprava materiálu", "Finální úklid", "Odvoz nábytku"]}
     ];
+
+    function getDefaultPrice(itemIndex) {
+      return 4800 + itemIndex * 850;
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem('rekonstruceData');
+      if (saved) {
+        const data = JSON.parse(saved);
+        prices = data.prices || {};
+        selectedItems = data.selectedItems || [];
+        totalPrice = data.totalPrice || 0;
+        totalItems = selectedItems.length;
+      }
+    }
+
+    function saveToStorage() {
+      const data = {
+        prices: prices,
+        selectedItems: selectedItems,
+        totalPrice: totalPrice
+      };
+      localStorage.setItem('rekonstruceData', JSON.stringify(data));
+    }
 
     function renderKategorie() {
       const container = document.getElementById('kategorie-grid');
       container.innerHTML = '';
       
       kategorieData.forEach(kat => {
+        const activeCount = selectedItems.filter(item => item.catId === kat.id).length;
+        
         const div = document.createElement('div');
         div.className = `karta bg-white border-2 border-gray-200 rounded-3xl p-6 text-center cursor-pointer`;
         div.innerHTML = `
-          <div class="icon-box w-16 h-16 bg-green-100 text-4xl rounded
+          <div class="icon-box w-16 h-16 bg-green-100 text-4xl rounded-2xl flex items-center justify-center mx-auto mb-5">
+            ${kat.icon}
+          </div>
+          <h3 class="font-semibold text-lg text-gray-800">${kat.nazev}</h3>
+          <p class="text-sm text-gray-500 mt-3">${activeCount} položek</p>
+        `;
+        div.onclick = () => otevritKategorii(kat);
+        container.appendChild(div);
+      });
+    }
+
+    function renderSelectedTable() {
+      const tbody = document.getElementById('selected-table');
+      tbody.innerHTML = '';
+
+      selectedItems.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="px-6 py-4">${item.categoryName}</td>
+          <td class="px-6 py-4">${item.name}</td>
+          <td class="px-6 py-4 text-right font-semibold text-green-600">${item.price.toLocaleString('cs-CZ')} Kč</td>
+          <td class="px-6 py-4 text-center">
+            <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 text-xl">×</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function aktualizovatSoucty() {
+      document.getElementById('total-price').textContent = totalPrice.toLocaleString('cs-CZ') + ' Kč';
+      document.getElementById('total-area').textContent = (totalItems * 3.2).toFixed(2) + ' m²';
+      document.getElementById('total-items').textContent = totalItems;
+    }
+
+    let currentCategory = null;
+
+    function otevritKategorii(kat) {
+      currentCategory = kat;
+      document.getElementById('modal-header').innerHTML = `
+        <span class="text-4xl">${kat.icon}</span>
+        <span>${kat.nazev}</span>
+      `;
+
+      let html = `<div class="space-y-5">`;
+      
+      kat.podkategorie.forEach((pod, i) => {
+        const key = `${kat.id}-${i}`;
+        const price = prices[key] !== undefined ? prices[key] : getDefaultPrice(i);
+        const isChecked = selectedItems.some(item => item.catId === kat.id && item.itemIndex === i);
+        
+        html += `
+          <div class="flex items-center justify-between bg-gray-50 hover:bg-white border border-transparent hover:border-gray-200 rounded-2xl p-5 group">
+            <div class="flex items-start gap-4 flex-1">
+              <input type="checkbox" id="chk-${key}" ${isChecked ? 'checked' : ''} 
+                     onchange="toggleItem(${kat.id}, ${i}, '${pod}', ${price}, this.checked)" 
+                     class="mt-1.5 w-5 h-5 accent-green-600">
+              <label for="chk-${key}" class="cursor-pointer text-gray-800">${pod}</label>
+            </div>
+            
+            <div onclick="editPrice(${kat.id}, ${i}, this)" 
+                 class="cursor-pointer text-right min-w-[120px]">
+              <span class="font-semibold text-green-600">${price.toLocaleString('cs-CZ')} Kč</span>
+            </div>
+          </div>`;
+      });
+      
+      html += `</div>`;
+      document.getElementById('modal-content').innerHTML = html;
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+    }
+
+    function toggleItem(catId, itemIndex, name, price, checked) {
+      const key = `${catId}-${itemIndex}`;
+      const categoryName = kategorieData.find(k => k.id === catId).nazev;
+
+      if (checked) {
+        // Додаємо
+        selectedItems.push({
+          catId, itemIndex, categoryName, name, price
+        });
+        totalPrice += price;
+        totalItems++;
+      } else {
+        // Видаляємо
+        const idx = selectedItems.findIndex(item => item.catId === catId && item.itemIndex === itemIndex);
+        if (idx !== -1) {
+          totalPrice -= selectedItems[idx].price;
+          selectedItems.splice(idx, 1);
+          totalItems--;
+        }
+      }
+
+      aktualizovatSoucty();
+      saveToStorage();
+      renderKategorie();
+      renderSelectedTable();
+    }
+
+    function editPrice(catId, itemIndex, element) {
+      const key = `${catId}-${itemIndex}`;
+      let currentPrice = prices[key] !== undefined ? prices[key] : getDefaultPrice(itemIndex);
+      
+      const newPriceStr = prompt(`Uprav cenu položky (v Kč):`, currentPrice);
+      if (newPriceStr === null) return;
+      
+      const newPrice = parseInt(newPriceStr.replace(/\s/g, ''));
+      if (isNaN(newPrice) || newPrice < 0) {
+        alert("Zadej platnou kladnou částku!");
+        return;
+      }
+
+      prices[key] = newPrice;
+
+      // Якщо позиція вже вибрана — оновлюємо ціну в масиві
+      const item = selectedItems.find(it => it.catId === catId && it.itemIndex === itemIndex);
+      if (item) {
+        totalPrice = totalPrice - item.price + newPrice;
+        item.price = newPrice;
+      }
+
+      aktualizovatSoucty();
+      saveToStorage();
+      renderSelectedTable();
+      otevritKategorii(currentCategory); // оновлюємо модалку
+    }
+
+    function pridatVlastniPolozku() {
+      if (!currentCategory) return;
+      const nazev = prompt("Název vlastní položky:");
+      if (!nazev) return;
+      
+      const priceStr = prompt("Cena položky (v Kč):", "6500");
+      const price = parseInt(priceStr) || 6500;
+
+      selectedItems.push({
+        catId: currentCategory.id,
+        itemIndex: -1,
+        categoryName: currentCategory.nazev,
+        name: nazev + " (vlastní)",
+        price: price
+      });
+
+      totalPrice += price;
+      totalItems++;
+
+      aktualizovatSoucty();
+      saveToStorage();
+      renderKategorie();
+      renderSelectedTable();
+      zavritModal();
+    }
+
+    function removeItem(index) {
+      if (confirm("Opravdu odstranit tuto položku?")) {
+        const item = selectedItems[index];
+        totalPrice -= item.price;
+        totalItems--;
+        selectedItems.splice(index, 1);
+        
+        aktualizovatSoucty();
+        saveToStorage();
+        renderKategorie();
+        renderSelectedTable();
+      }
+    }
+
+    function ulozitZakazku() {
+      saveToStorage();
+      alert(`✅ Zakázka úspěšně uložena!\nCelková cena: ${totalPrice.toLocaleString('cs-CZ')} Kč\nPočet položek: ${totalItems}`);
+    }
+
+    function novyProjekt() {
+      if (confirm("Vytvořit nový projekt? Všechna data budou smazána.")) {
+        localStorage.removeItem('rekonstruceData');
+        location.reload();
+      }
+    }
+
+    function vytvoritPDF() {
+      alert(`📄 Generuji PDF rozpočet...\nCelková cena: ${totalPrice.toLocaleString('cs-CZ')} Kč`);
+    }
+
+    // Ініціалізація
+    loadFromStorage();
+    renderKategorie();
+    renderSelectedTable();
+    aktualizovatSoucty();
+
+    // Закриття модалки
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modal')) zavritModal();
+    });
+
+    function zavritModal() {
+      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('flex');
+    }
+  </script>
+</body>
+</html>

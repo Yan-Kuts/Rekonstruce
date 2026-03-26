@@ -1,0 +1,8 @@
+function vybratKategorii(element) {
+  // Тут буде логіка відкриття форми для додавання робіт у категорію
+  console.log("Вибрано категорію:", element.querySelector('h3').textContent);
+  
+  // Приклад: виділення активної картки
+  document.querySelectorAll('.karta').forEach(el => el.classList.remove('ring-2', 'ring-green-500'));
+  element.classList.add('ring-2', 'ring-green-500');
+}

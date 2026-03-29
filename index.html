@@ -1,208 +1,224 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekonstrukce 2026 - Jan Novák</title>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
-    <style>
-        :root {
-            --primary: #1e40af;
-            --accent: #f59e0b;
-        }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            background: #f8fafc;
-            color: #1e2937;
-        }
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 1.5rem;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        h1 { margin: 0; font-size: 2.2rem; }
-        .subtitle { opacity: 0.9; font-size: 1.1rem; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rekonstrukce</title>
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.12);
-        }
-        .folder-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-        .content {
-            display: none;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
-        }
-        .folder.open .content { display: block; }
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .item {
-            background: #f1f5f9;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: background 0.2s;
-        }
-        .item:hover { background: #e0f2fe; }
+  <style>
+    body { font-family: Arial; margin:0; background:#f4f4f4; }
+    header {
+      background:#222; color:white; padding:15px;
+      display:flex; justify-content:space-between;
+    }
+    button { padding:6px 10px; cursor:pointer; margin:2px; }
 
-        .search {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            margin-bottom: 20px;
-        }
+    .container { display:flex; padding:15px; }
+    .sidebar, .right-panel, .content {
+      background:white; padding:15px; margin:5px;
+    }
+    .sidebar { width:220px; }
+    .right-panel { width:300px; }
+    .content { flex:1; }
 
-        footer {
-            text-align: center;
-            padding: 30px;
-            color: #64748b;
-            font-size: 0.9rem;
-        }
+    .category { padding:8px; background:#eee; margin-bottom:5px; cursor:pointer; }
 
-        .icon { width: 28px; height: 28px; color: var(--accent); }
-    </style>
+    input { width:100%; padding:5px; margin-top:5px; }
+
+    .hidden { display:none; }
+
+    #auth {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.8);
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    .auth-box {
+      background:white; padding:20px; width:300px;
+    }
+  </style>
 </head>
+
 <body>
-    <header>
-        <h1>Rekonstrukce bytu 2026</h1>
-        <p class="subtitle">Jan Novák • Ulice 123, Město</p>
-    </header>
 
-    <div class="container">
-        <input type="text" id="search" class="search" placeholder="🔍 Пошук матеріалів або робіт...">
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-box">
+    <h3>Login / Registrace</h3>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Heslo">
+    <button onclick="register()">Registrace</button>
+    <button onclick="login()">Přihlásit</button>
+  </div>
+</div>
 
-        <!-- Категорії робіт -->
-        <h2 style="margin: 30px 0 15px;">📂 Категорії робіт</h2>
-        <div class="grid" id="categories"></div>
+<header>
+  <div><strong>Rekonstrukce</strong></div>
+  <div>
+    <button onclick="newProject()">Nová rekonstrukce</button>
+    <button onclick="showHistory()">Historie</button>
+    <button onclick="logout()">Odhlásit</button>
+  </div>
+</header>
 
-        <!-- Матеріали -->
-        <h2 style="margin: 40px 0 15px;">🧱 Матеріали</h2>
-        <div class="card" id="materials-folder">
-            <div class="folder-header" onclick="toggleFolder(this.parentElement)">
-                <i data-lucide="package" class="icon"></i>
-                <span>Матеріали (Список)</span>
-            </div>
-            <div class="content">
-                <div id="materials-list"></div>
-            </div>
-        </div>
-    </div>
+<div class="container">
 
-    <footer>
-        © 2026 Rekonstrukce • Створено для зручного управління проектом
-    </footer>
+  <div class="sidebar">
+    <h3>Kategorie</h3>
+    <div class="category" onclick="addWork('Demolice')">Demolice</div>
+    <div class="category" onclick="addWork('Odpad')">Odpad</div>
+    <div class="category" onclick="addWork('Malování')">Malování</div>
+    <div class="category" onclick="addWork('Obklady')">Obklady</div>
+    <div class="category" onclick="addWork('Elektro')">Elektro</div>
+    <div class="category" onclick="addWork('Instalace')">Instalace</div>
+    <div class="category" onclick="addWork('Podlahy')">Podlahy</div>
+  </div>
 
-    <script>
-        lucide.createIcons();
+  <div class="content">
+    <h2>Projekt</h2>
+    <div id="works"></div>
+  </div>
 
-        const categories = [
-            { name: "Bourání", icon: "hammer", count: 0, items: ["Демонтаж стін", "Видалення підлоги", "Демонтаж перегородок"] },
-            { name: "Odpadů", icon: "trash-2", count: 0, items: ["Вивіз сміття", "Контейнер 8м³", "Сортування"] },
-            { name: "Zednické práce", icon: "brick", count: 0, items: ["Кладка цегли", "Штукатурка", "Вирівнювання стін"] },
-            { name: "Obklady", icon: "square", count: 0, items: ["Плитка на підлогу", "Плитка на стіни", "Фуга"] },
-            { name: "Podlahy", icon: "layers", count: 0, items: ["Ламінат", "Вініл", "Стяжка"] },
-            { name: "Elektroinstalace", icon: "zap", count: 0, items: ["Проводка", "Розетки", "Освітлення"] },
-            { name: "Instalatérské práce", icon: "wrench", count: 0, items: ["Водопровід", "Каналізація", "Опалення"] },
-            { name: "Topení a VZT", icon: "thermometer-sun", count: 0, items: ["Радіатори", "Тепла підлога", "Вентиляція"] },
-            { name: "Malování a dokončování", icon: "paintbrush", count: 0, items: ["Грунтовка", "Фарбування", "Шпаклювання"] }
-        ];
+  <div class="right-panel">
+    <h3>Souhrn</h3>
+    <div id="summary"></div>
+    <h3>Celkem: <span id="total">0</span> Kč</h3>
 
-        const materials = [
-            "Sádrokarton RB 12,5 mm standard",
-            "Sádrokarton impregnovaný",
-            "Profil CW / UW 75 mm",
-            "Lepilo na obklady",
-            "Dlažba 60x60 cm",
-            "Fuga šedá",
-            "Izolace minerální vata",
-            "Omítka strojní",
-            "Barva bílá matná"
-        ];
+    <button onclick="saveProject()">Uložit</button>
+    <button onclick="exportPDF()">Export PDF</button>
+  </div>
 
-        // Створення категорій
-        function renderCategories() {
-            const container = document.getElementById('categories');
-            container.innerHTML = '';
-            categories.forEach(cat => {
-                const card = document.createElement('div');
-                card.className = 'card folder';
-                card.innerHTML = `
-                    <div class="folder-header" onclick="toggleFolder(this.parentElement)">
-                        <i data-lucide="${cat.icon}" class="icon"></i>
-                        <span>${cat.name}</span>
-                        <span style="margin-left:auto; color:#64748b; font-size:0.95rem;">${cat.count} položek</span>
-                    </div>
-                    <div class="content">
-                        ${cat.items.map(item => `
-                            <div class="item">
-                                <i data-lucide="check-circle" class="icon" style="width:20px;height:20px;"></i>
-                                <span>${item}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-            lucide.createIcons();
-        }
+</div>
 
-        // Матеріали
-        function renderMaterials() {
-            const list = document.getElementById('materials-list');
-            list.innerHTML = materials.map(mat => `
-                <div class="item">
-                    <i data-lucide="package" class="icon" style="width:22px;height:22px;"></i>
-                    <span>${mat}</span>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
+<script>
+let works = [];
+let currentUser = null;
 
-        function toggleFolder(folder) {
-            folder.classList.toggle('open');
-        }
+function register(){
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
 
-        // Пошук
-        document.getElementById('search').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            // Можна розширити пошук по всіх картках, але поки базовий
-            console.log('Пошук:', term);
-        });
+  localStorage.setItem(email, pass);
+  alert("Registrováno");
+}
 
-        // Ініціалізація
-        window.onload = () => {
-            renderCategories();
-            renderMaterials();
-        };
-    </script>
+function login(){
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
+
+  const stored = localStorage.getItem(email);
+
+  if(stored === pass){
+    currentUser = email;
+    document.getElementById("auth").style.display = "none";
+  } else {
+    alert("Chyba přihlášení");
+  }
+}
+
+function logout(){
+  location.reload();
+}
+
+function newProject(){
+  works = [];
+  renderWorks();
+}
+
+function addWork(category){
+  works.push({category, quantity:0, price:0});
+  renderWorks();
+}
+
+function renderWorks(){
+  const container = document.getElementById("works");
+  container.innerHTML = "";
+
+  works.forEach((w,i)=>{
+    container.innerHTML += `
+      <div>
+        <b>${w.category}</b>
+        <input type="number" placeholder="Množství" value="${w.quantity}"
+          onchange="update(${i},'quantity',this.value)">
+        <input type="number" placeholder="Cena"
+          value="${w.price}"
+          onchange="update(${i},'price',this.value)">
+        <div>Mezisoučet: ${w.quantity * w.price} Kč</div>
+        <hr>
+      </div>
+    `;
+  });
+
+  renderSummary();
+}
+
+function update(i,field,value){
+  works[i][field] = parseFloat(value)||0;
+  renderWorks();
+}
+
+function renderSummary(){
+  let total = 0;
+  const summary = document.getElementById("summary");
+  summary.innerHTML = "";
+
+  works.forEach(w=>{
+    let sum = w.quantity * w.price;
+    total += sum;
+    summary.innerHTML += `<div>${w.category}: ${sum} Kč</div>`;
+  });
+
+  document.getElementById("total").innerText = total;
+}
+
+function saveProject(){
+  if(!currentUser) return alert("Přihlaste se");
+
+  let projects = JSON.parse(localStorage.getItem("projects")||"{}");
+
+  if(!projects[currentUser]) projects[currentUser] = [];
+
+  projects[currentUser].push({
+    date: new Date(),
+    works: works
+  });
+
+  localStorage.setItem("projects", JSON.stringify(projects));
+
+  alert("Uloženo");
+}
+
+function showHistory(){
+  let projects = JSON.parse(localStorage.getItem("projects")||"{}");
+  let userProjects = projects[currentUser] || [];
+
+  alert("Počet projektů: " + userProjects.length);
+}
+
+function exportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  let y = 10;
+
+  doc.text("Rekonstrukce - Projekt", 10, y);
+  y += 10;
+
+  works.forEach(w=>{
+    let sum = w.quantity * w.price;
+    doc.text(`${w.category} - ${sum} Kč`, 10, y);
+    y += 8;
+  });
+
+  let total = works.reduce((a,b)=>a + (b.quantity*b.price),0);
+  y += 10;
+  doc.text("Celkem: " + total + " Kč", 10, y);
+
+  doc.save("projekt.pdf");
+}
+</script>
+
 </body>
 </html>

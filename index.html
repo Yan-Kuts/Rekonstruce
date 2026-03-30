@@ -1,506 +1,416 @@
-<<!DOCTYPE html>
-<html lang="uk">
+<!DOCTYPE html>
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏗️ Rekonstrukce / Реконструкція — Кошторис</title>
+    <title>🏗️ Rekonstrukce — Rozpočet</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* --- ЗАГАЛЬНІ СТИЛІ (Minimal & Modern) --- */
+        /* --- ЗАГАЛЬНІ СТИЛІ --- */
         :root {
-            --primary: #2a9d8f; /* Teal */
-            --secondary: #e76f51; /* Orange */
+            --primary: #2a9d8f; 
+            --secondary: #e76f51; 
             --bg-light: #f4f4f9;
             --bg-white: #ffffff;
             --text-dark: #333;
             --text-muted: #666;
             --border-color: #ddd;
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
-            --transition: all 0.3s ease;
+            --transition: all 0.2s ease;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-light); color: var(--text-dark); line-height: 1.6; overflow-x: hidden; }
 
-        body {
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
+        /* --- КНОПКИ ТА ІНПУТИ --- */
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: #21867a; }
+        .btn-secondary { background-color: var(--bg-white); color: var(--primary); border: 1px solid var(--primary); }
+        .btn-secondary:hover { background-color: #f0fdfa; }
+        .btn-danger { background-color: #e63946; color: white; padding: 4px 8px; font-size: 0.8rem; }
+        .btn-orange { background-color: var(--secondary); color: white; width: 100%; margin-top: 10px; padding: 12px; }
+        .btn-orange:hover { background-color: #d95d3f; }
+        
+        input { padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .input-qty, .input-price { width: 80px; text-align: center; }
 
-        /* --- UI ЕЛЕМЕНТИ --- */
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-        }
+        /* --- HEADER --- */
+        header { background-color: var(--bg-white); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .header-btns { display: flex; gap: 10px; }
 
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
+        /* --- LAYOUT --- */
+        .main-container { display: grid; grid-template-columns: 280px 1fr 380px; gap: 20px; padding: 20px; height: calc(100vh - 70px); }
+        .panel { background-color: var(--bg-white); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); overflow-y: auto; }
+        .panel-title { font-size: 1.2rem; margin-bottom: 20px; font-weight: 700; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; }
 
-        .btn-primary:hover {
-            background-color: #21867a;
-        }
+        /* --- ЛІВА ПАНЕЛЬ (КАТЕГОРІЇ) --- */
+        .category-list { list-style: none; }
+        .category-item { padding: 10px 15px; cursor: pointer; border-radius: 8px; transition: var(--transition); display: flex; align-items: center; gap: 10px; color: var(--text-dark); font-weight: 500; margin-bottom: 5px; }
+        .category-item:hover { background-color: #e6f7f4; }
+        .category-item.active { background-color: var(--primary); color: white; }
 
-        .btn-secondary {
-            background-color: var(--bg-white);
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
+        /* --- ЦЕНТРАЛЬНА ПАНЕЛЬ (РОБОТИ) --- */
+        .work-item-row { display: grid; grid-template-columns: 1fr 90px 90px 90px; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .work-item-name { font-weight: 500; font-size: 0.95rem; }
+        .unit-label { color: var(--text-muted); font-size: 0.85rem; }
+        
+        /* Custom materials row */
+        .custom-material-row { display: grid; grid-template-columns: 1fr 70px 80px 80px 90px; gap: 10px; margin-bottom: 15px; align-items: center; }
 
-        .btn-secondary:hover {
-            background-color: #f0fdfa;
-        }
+        /* --- ПРАВА ПАНЕЛЬ (КОШТОРИС) --- */
+        .right-panel { display: flex; flex-direction: column; }
+        .estimate-header { margin-bottom: 15px; }
+        .estimate-project-name { font-size: 1.2rem; font-weight: 700; }
+        .estimate-list { list-style: none; flex-grow: 1; overflow-y: auto; font-size: 0.9rem; padding-right: 5px; }
+        .estimate-category-title { font-weight: 700; color: var(--primary); margin: 15px 0 5px 0; font-size: 1rem; border-bottom: 1px solid #eee; }
+        .estimate-item { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; padding: 5px 0; align-items: center; border-bottom: 1px dashed #eee;}
+        .estimate-item-sum { font-weight: 600; color: var(--text-dark); text-align: right; }
+        .delete-btn { cursor: pointer; color: #e63946; font-size: 1.1rem; padding: 0 5px; }
+        
+        .totals-section { border-top: 2px solid var(--border-color); padding-top: 15px; margin-top: auto; background: var(--bg-white); }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.95rem; }
+        .grand-total { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px; }
 
-        .btn-orange {
-            background-color: var(--secondary);
-            color: white;
-            width: 100%;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .btn-orange:hover {
-            background-color: #d95d3f;
-        }
-
-        input {
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            width: 80px;
-            text-align: center;
-        }
-
-        /* --- 3. HEADER (Верхня панель) --- */
-        header {
-            background-color: var(--bg-white);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-btns {
-            display: flex;
-            gap: 15px;
-        }
-
-        /* --- 5. Layout СТВОРЕННЯ ПРОЄКТУ --- */
-        .main-container {
-            display: grid;
-            grid-template-columns: 280px 1fr 350px;
-            gap: 30px;
-            padding: 30px;
-            height: calc(100vh - 80px); /* Full height minus header */
-        }
-
-        /* --- 6. КАТЕГОРІЇ РОБІТ (Left Panel) --- */
-        .left-panel {
-            background-color: var(--bg-white);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            overflow-y: auto;
-        }
-
-        .panel-title {
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-            color: var(--text-dark);
-            font-weight: 700;
-        }
-
-        .category-list {
-            list-style: none;
-        }
-
-        .category-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .category-item:hover, .category-item.active {
-            background-color: #e6f7f4;
-            color: var(--primary);
-        }
-
-        .category-item.active {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .category-icon {
-            font-size: 1.2rem;
-        }
-
-        /* --- Центральна панель НАЛАШТУВАННЯ --- */
-        .center-panel {
-            background-color: var(--bg-white);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            overflow-y: auto;
-        }
-
-        .work-config-title {
-            font-size: 1.3rem;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .work-item-row {
-            display: grid;
-            grid-template-columns: 1fr 100px 100px 120px;
-            align-items: center;
-            gap: 15px;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .work-item-name {
-            font-weight: 500;
-        }
-
-        .unit-label {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-left: 5px;
-        }
-
-        /* --- 8. КОШТОРИС (Right Panel, LIVE) --- */
-        .right-panel {
-            background-color: var(--bg-white);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .estimate-header {
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-
-        .estimate-project-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .estimate-list {
-            list-style: none;
-            flex-grow: 1;
-            overflow-y: auto;
-            font-size: 0.95rem;
-        }
-
-        .estimate-category-block {
-            margin-bottom: 15px;
-        }
-
-        .estimate-category-title {
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 5px;
-        }
-
-        .estimate-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-            color: var(--text-muted);
-        }
-
-        .estimate-item-sum {
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        .totals-section {
-            border-top: 2px solid var(--border-color);
-            padding-top: 15px;
-            margin-top: auto;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .total-label {
-            color: var(--text-muted);
-        }
-
-        .grand-total {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--text-dark);
-            margin-top: 10px;
-        }
-
-        /* --- АДАПТИВНІСТЬ (Mobile) --- */
         @media (max-width: 1100px) {
-            .main-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-                height: auto;
-                padding: 15px;
-            }
-
-            header {
-                padding: 10px 15px;
-                flex-direction: column;
-                gap: 10px;
-            }
+            .main-container { grid-template-columns: 1fr; height: auto; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">
-            <span>🏗️</span> Rekonstrukce / Реконструкція
-        </div>
+        <div class="logo">🏗️ Rekonstrukce</div>
         <div class="header-btns">
-            <button class="btn btn-primary">➕ Нова реконструкція</button>
-            <button class="btn btn-secondary">📂 Історія</button>
-            <button class="btn btn-secondary">👤 Акаунт ▾</button>
+            <button class="btn btn-secondary" onclick="clearEstimate()">🗑️ Vymazat projekt</button>
+            <button class="btn btn-primary">👤 Účet</button>
         </div>
     </header>
 
     <div class="main-container">
 
-        <aside class="left-panel">
-            <div class="panel-title">Категорії робіт</div>
-            <ul class="category-list">
-                <li class="category-item active" onclick="selectCategory('🧱', 'Мулярські роботи')">
-                    <span class="category-icon">🧱</span> Мулярські роботи
-                </li>
-                <li class="category-item" onclick="selectCategory('🚧', 'Демонтаж')">
-                    <span class="category-icon">🚧</span> Демонтаж
-                </li>
-                <li class="category-item" onclick="selectCategory('🖌️', 'Малярські роботи')">
-                    <span class="category-icon">🖌️</span> Малярські роботи
-                </li>
-                <li class="category-item" onclick="selectCategory('🔲', 'Плитка')">
-                    <span class="category-icon">🔲</span> Плитка
-                </li>
-                <li class="category-item" onclick="selectCategory('⚡', 'Електрика')">
-                    <span class="category-icon">⚡</span> Електрика
-                </li>
-                <li class="category-item" onclick="selectCategory('🛁', 'Інсталяції')">
-                    <span class="category-icon">🛁</span> Інсталяції
-                </li>
-                <li class="category-item" onclick="selectCategory('🧹', 'Прибирання')">
-                    <span class="category-icon">🧹</span> Прибирання
-                </li>
-                <li class="category-item" onclick="selectCategory('📦', 'Матеріали')">
-                    <span class="category-icon">📦</span> Матеріали
-                </li>
-            </ul>
+        <aside class="panel">
+            <div class="panel-title">Kategorie prací</div>
+            <ul class="category-list" id="categoryList">
+                </ul>
         </aside>
 
-        <main class="center-panel">
-            <div class="work-config-title" id="configTitle">
-                🧱 Мулярські роботи
-            </div>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">Введіть кількість та ціну, щоб додати роботу до кошторису.</p>
-
+        <main class="panel">
+            <div class="panel-title" id="configTitle">Vyberte kategorii</div>
             <div id="workConfigList">
-                <div class="work-item-row">
-                    <div class="work-item-name">штукатурка <span class="unit-label">(м²)</span></div>
-                    <input type="number" placeholder="Кільк." id="qty-shtukaturka">
-                    <input type="number" placeholder="Ціна" id="price-shtukaturka" value="200">
-                    <button class="btn btn-primary btn-sm" onclick="addToEstimate('🧱 Мулярські роботи', 'штукатурка', 'м²', 'qty-shtukaturka', 'price-shtukaturka')">Додати</button>
-                </div>
-
-                <div class="work-item-row">
-                    <div class="work-item-name">вирівнювання стін <span class="unit-label">(м²)</span></div>
-                    <input type="number" placeholder="Кільк." id="qty-vyriv">
-                    <input type="number" placeholder="Ціна" id="price-vyriv" value="180">
-                    <button class="btn btn-primary btn-sm" onclick="addToEstimate('🧱 Мулярські роботи', 'вирівнювання стін', 'м²', 'qty-vyriv', 'price-vyriv')">Додати</button>
-                </div>
-                 <div class="work-item-row">
-                    <div class="work-item-name">кладка <span class="unit-label">(м²)</span></div>
-                    <input type="number" placeholder="Кільк." id="qty-kladka">
-                    <input type="number" placeholder="Ціна" id="price-kladka" value="250">
-                    <button class="btn btn-primary btn-sm" onclick="addToEstimate('🧱 Мулярські роботи', 'кладка', 'м²', 'qty-kladka', 'price-kladka')">Додати</button>
-                </div>
+                <p style="color: var(--text-muted);">Vyberte kategorii vlevo pro zobrazení položek.</p>
             </div>
         </main>
 
-        <aside class="right-panel">
-            <div class="estimate-header">
-                <div class="estimate-project-name">Кошторис: Квартира 74</div>
-                <div style="color: var(--text-muted); font-size: 0.9rem;">Дата: 24.05.2024</div>
-            </div>
+        <aside class="panel right-panel">
+            <div id="pdf-content" style="padding: 10px;">
+                <div class="estimate-header">
+                    <div class="estimate-project-name">Rozpočet: Nový projekt</div>
+                    <div style="color: var(--text-muted); font-size: 0.85rem;" id="currentDate"></div>
+                </div>
 
-            <ul class="estimate-list" id="estimateList">
-                <p style="text-align: center; color: var(--text-muted); padding-top: 30px;">Кошторис порожній</p>
-            </ul>
+                <ul class="estimate-list" id="estimateList">
+                    <p style="text-align: center; color: var(--text-muted); padding-top: 30px;">Rozpočet je prázdný</p>
+                </ul>
 
-            <div class="totals-section">
-                <div class="total-row">
-                    <span class="total-label">Роботи:</span>
-                    <span class="total-value" id="totalWorks">0 CZK</span>
+                <div class="totals-section">
+                    <div class="total-row">
+                        <span>Práce:</span>
+                        <span id="totalWorks">0 CZK</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Materiály:</span>
+                        <span id="totalMaterials">0 CZK</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>CELKEM:</span>
+                        <span id="grandTotal">0 CZK</span>
+                    </div>
                 </div>
-                <div class="total-row">
-                    <span class="total-label">Матеріали:</span>
-                    <span class="total-value" id="totalMaterials">0 CZK</span>
-                </div>
-                <div class="total-row grand-total">
-                    <span>ЗАГАЛОМ:</span>
-                    <span id="grandTotal">0 CZK</span>
-                </div>
-                <button class="btn btn-orange">📥 Export PDF</button>
             </div>
+            
+            <button class="btn btn-orange" onclick="exportToPDF()">📥 Exportovat PDF</button>
         </aside>
 
     </div>
 
     <script>
-        // БАЗОВА LIVE ЛОГІКА
+        // Встановлення поточної дати
+        document.getElementById('currentDate').innerText = 'Datum: ' + new Date().toLocaleDateString('cs-CZ');
 
-        // Дані кошторису
-        let estimateData = {};
-        let worksTotal = 0;
-        let materialsTotal = 0;
+        // БАЗА ДАНИХ (Каталог робіт чеською мовою)
+        const catalog = {
+            "Demontáž": { icon: "🚧", items: [
+                { id: "d1", name: "Demontáž stěn", unit: "m²", price: 150 },
+                { id: "d2", name: "Demontáž příček", unit: "m²", price: 120 },
+                { id: "d3", name: "Demontáž podlahy", unit: "m²", price: 90 },
+                { id: "d4", name: "Demontáž dlažby", unit: "m²", price: 100 },
+                { id: "d5", name: "Demontáž stropu", unit: "m²", price: 130 },
+                { id: "d6", name: "Demontáž sanity", unit: "ks", price: 300 },
+                { id: "d7", name: "Demontáž kuchyně", unit: "kpl", price: 1500 },
+                { id: "d8", name: "Demontáž dveří", unit: "ks", price: 250 },
+                { id: "d9", name: "Demontáž elektřiny", unit: "bm", price: 30 },
+                { id: "d10", name: "Drážkování", unit: "bm", price: 80 },
+                { id: "d11", name: "Vrtání otvorů (děr)", unit: "ks", price: 50 }
+            ]},
+            "Odpad": { icon: "🗑️", items: [
+                { id: "o1", name: "Kontejner", unit: "ks", price: 3500 },
+                { id: "o2", name: "Odvoz suti", unit: "t", price: 800 },
+                { id: "o3", name: "Ruční nošení", unit: "h", price: 350 },
+                { id: "o4", name: "Likvidace", unit: "t", price: 1200 },
+                { id: "o5", name: "Třídění", unit: "h", price: 300 }
+            ]},
+            "Zednické práce": { icon: "🧱", items: [
+                { id: "z1", name: "Zdění", unit: "m²", price: 600 },
+                { id: "z2", name: "Omítka", unit: "m²", price: 250 },
+                { id: "z3", name: "Vyrovnání stěn", unit: "m²", price: 200 },
+                { id: "z4", name: "Perlinka + lepidlo", unit: "m²", price: 180 },
+                { id: "z5", name: "Betonářské práce", unit: "m²", price: 450 },
+                { id: "z6", name: "Zapravení otvorů", unit: "ks", price: 350 }
+            ]},
+            "Malířské práce": { icon: "🖌️", items: [
+                { id: "m1", name: "Malba 1 vrstva", unit: "m²", price: 45 },
+                { id: "m2", name: "Malba 2 vrstvy", unit: "m²", price: 70 },
+                { id: "m3", name: "Akryl", unit: "m²", price: 30 },
+                { id: "m4", name: "Malba linky", unit: "bm", price: 25 },
+                { id: "m5", name: "Stěrkování", unit: "m²", price: 150 },
+                { id: "m6", name: "Penetrace", unit: "m²", price: 20 },
+                { id: "m7", name: "Broušení", unit: "m²", price: 40 }
+            ]},
+            "Obklady a dlažby": { icon: "🔲", items: [
+                { id: "p1", name: "Formát 30x30", unit: "m²", price: 550 },
+                { id: "p2", name: "Formát 60x60", unit: "m²", price: 650 },
+                { id: "p3", name: "Formát 60x120", unit: "m²", price: 850 },
+                { id: "p4", name: "Mozaika", unit: "m²", price: 1100 },
+                { id: "p5", name: "Pokládka (základní)", unit: "m²", price: 500 },
+                { id: "p6", name: "Řezání", unit: "bm", price: 150 },
+                { id: "p7", name: "Vrtání otvorů", unit: "ks", price: 80 },
+                { id: "p8", name: "Spárování", unit: "m²", price: 90 }
+            ]},
+            "Izolace": { icon: "🛡️", items: [
+                { id: "i1", name: "Hydroizolace", unit: "m²", price: 350 },
+                { id: "i2", name: "Tepelná izolace", unit: "m²", price: 250 },
+                { id: "i3", name: "Zvuková izolace", unit: "m²", price: 300 }
+            ]},
+            "Špalety / rohy": { icon: "🪟", items: [
+                { id: "s1", name: "Špalety oken", unit: "bm", price: 280 },
+                { id: "s2", name: "Špalety dveří", unit: "bm", price: 250 },
+                { id: "s3", name: "Ochranné rohy", unit: "bm", price: 90 },
+                { id: "s4", name: "Začišťovací lišty", unit: "bm", price: 80 }
+            ]},
+            "Elektroinstalace": { icon: "⚡", items: [
+                { id: "e1", name: "Zásuvky", unit: "ks", price: 200 },
+                { id: "e2", name: "Světla", unit: "ks", price: 250 },
+                { id: "e3", name: "Kabeláž", unit: "bm", price: 45 },
+                { id: "e4", name: "Rozvaděč", unit: "ks", price: 3500 }
+            ]},
+            "Vodoinstalace a topení": { icon: "🛁", items: [
+                { id: "v1", name: "Umyvadlo (montáž)", unit: "ks", price: 800 },
+                { id: "v2", name: "Vana (montáž)", unit: "ks", price: 2500 },
+                { id: "v3", name: "Sprcha (montáž)", unit: "ks", price: 2000 },
+                { id: "v4", name: "WC (montáž)", unit: "ks", price: 1500 },
+                { id: "v5", name: "Rozvody vody", unit: "bm", price: 300 },
+                { id: "v6", name: "Kanalizace", unit: "bm", price: 350 }
+            ]},
+            "Podlahy": { icon: "🪵", items: [
+                { id: "f1", name: "Laminát", unit: "m²", price: 250 },
+                { id: "f2", name: "Dlažba", unit: "m²", price: 550 },
+                { id: "f3", name: "Parkety", unit: "m²", price: 450 },
+                { id: "f4", name: "Vinyl", unit: "m²", price: 300 }
+            ]},
+            "Úklid": { icon: "🧹", items: [
+                { id: "u1", name: "Finální úklid", unit: "kpl", price: 3000 },
+                { id: "u2", name: "Odstranění stavebního prachu", unit: "h", price: 250 },
+                { id: "u3", name: "Příprava k předání", unit: "kpl", price: 1500 }
+            ]},
+            "Materiály": { icon: "📦", isCustom: true, items: [] }
+        };
 
-        // Функція вибору категорії (для UI демонстрації)
-        function selectCategory(icon, name) {
-            // Зміна активного класу в меню
+        // Стан додатка (завантажується з localStorage або створюється порожнім)
+        let estimateData = JSON.parse(localStorage.getItem('estimateData')) || {};
+
+        // 1. ІНІЦІАЛІЗАЦІЯ ДОДАТКА
+        function initApp() {
+            const listEl = document.getElementById('categoryList');
+            for (const [key, data] of Object.entries(catalog)) {
+                listEl.innerHTML += `
+                    <li class="category-item" onclick="selectCategory('${key}')" id="cat-${key}">
+                        ${data.icon} ${key}
+                    </li>
+                `;
+            }
+            updateEstimateUI();
+        }
+
+        // 2. ВИБІР КАТЕГОРІЇ
+        function selectCategory(categoryName) {
             document.querySelectorAll('.category-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            document.getElementById(`cat-${categoryName}`).classList.add('active');
+            
+            const catData = catalog[categoryName];
+            document.getElementById('configTitle').innerHTML = `${catData.icon} ${categoryName}`;
+            
+            const listEl = document.getElementById('workConfigList');
+            listEl.innerHTML = '';
 
-            // Зміна заголовка центральної панелі
-            document.getElementById('configTitle').innerHTML = `${icon} ${name}`;
-
-            // В реальному SPA тут був би рендер списку робіт для цієї категорії.
-            // Поки що залишаємо демонстраційний список мулярських робіт.
-            if(name !== 'Мулярські роботи') {
-                 document.getElementById('workConfigList').innerHTML = `<p style="padding: 20px; color: var(--text-muted);">Для демо-версії виберіть 'Мулярські роботи'. В реальній версії тут буде список для ${name}.</p>`;
+            if (catData.isCustom) {
+                // Спеціальний інтерфейс для МАТЕРІАЛІВ (ручний ввід)
+                listEl.innerHTML = `
+                    <p style="color: var(--text-muted); margin-bottom: 15px;">Zadejte vlastní materiály:</p>
+                    <div class="custom-material-row">
+                        <input type="text" id="mat-name" placeholder="Název materiálu">
+                        <input type="text" id="mat-unit" placeholder="Jedn. (ks, m²)" value="ks">
+                        <input type="number" id="mat-qty" placeholder="Množství" class="input-qty">
+                        <input type="number" id="mat-price" placeholder="Cena/j" class="input-price">
+                        <button class="btn btn-primary" onclick="addCustomMaterial()">Přidat</button>
+                    </div>
+                `;
             } else {
-                location.reload(); // Простий спосіб повернути початковий список
+                // Стандартний інтерфейс для робіт (з каталогу)
+                catData.items.forEach(item => {
+                    listEl.innerHTML += `
+                        <div class="work-item-row">
+                            <div><span class="work-item-name">${item.name}</span> <span class="unit-label">(${item.unit})</span></div>
+                            <input type="number" placeholder="Množ." id="qty-${item.id}" class="input-qty">
+                            <input type="number" placeholder="Cena" id="price-${item.id}" value="${item.price}" class="input-price">
+                            <button class="btn btn-primary" onclick="addToEstimate('${categoryName}', '${item.name}', '${item.unit}', 'qty-${item.id}', 'price-${item.id}')">Přidat</button>
+                        </div>
+                    `;
+                });
             }
         }
 
-        // Функція додавання роботи в кошторис
+        // 3. ДОДАВАННЯ РОБОТИ/МАТЕРІАЛУ ДО КОШТОРИСУ
         function addToEstimate(category, name, unit, qtyId, priceId) {
             const qty = parseFloat(document.getElementById(qtyId).value);
             const price = parseFloat(document.getElementById(priceId).value);
 
-            if (!qty || qty <= 0 || !price || price <= 0) {
-                alert("Будь ласка, введіть коректну кількість та ціну.");
-                return;
-            }
+            if (!qty || qty <= 0 || !price || price < 0) return alert("Zadejte platné množství a cenu.");
 
+            saveItemToState(category, name, unit, qty, price);
+            document.getElementById(qtyId).value = ''; // Очистка поля
+        }
+
+        function addCustomMaterial() {
+            const name = document.getElementById('mat-name').value;
+            const unit = document.getElementById('mat-unit').value;
+            const qty = parseFloat(document.getElementById('mat-qty').value);
+            const price = parseFloat(document.getElementById('mat-price').value);
+
+            if (!name) return alert("Zadejte název materiálu.");
+            if (!qty || qty <= 0 || !price || price < 0) return alert("Zadejte platné množství a cenu.");
+
+            saveItemToState("Materiály", name, unit, qty, price);
+            
+            // Очистка полів
+            document.getElementById('mat-name').value = '';
+            document.getElementById('mat-qty').value = '';
+            document.getElementById('mat-price').value = '';
+        }
+
+        function saveItemToState(category, name, unit, qty, price) {
+            if (!estimateData[category]) estimateData[category] = [];
+            
             const sum = qty * price;
-
-            // Ініціалізація категорії в даних, якщо її немає
-            if (!estimateData[category]) {
-                estimateData[category] = [];
+            // Перевіряємо, чи є вже така позиція, щоб додати кількість, а не дублювати рядок
+            const existingItem = estimateData[category].find(i => i.name === name && i.price === price);
+            
+            if (existingItem) {
+                existingItem.qty += qty;
+                existingItem.sum += sum;
+            } else {
+                // Генеруємо унікальний ID для можливості видалення
+                estimateData[category].push({ id: Date.now(), name, unit, qty, price, sum });
             }
 
-            // Додавання позиції
-            estimateData[category].push({ name, unit, qty, price, sum });
+            saveAndRender();
+        }
 
-            // Очищення полів вводу
-            document.getElementById(qtyId).value = '';
+        // 4. ВИДАЛЕННЯ ПОЗИЦІЇ З КОШТОРИСУ
+        function removeItem(category, id) {
+            estimateData[category] = estimateData[category].filter(item => item.id !== id);
+            if (estimateData[category].length === 0) delete estimateData[category];
+            saveAndRender();
+        }
 
+        // 5. ОНОВЛЕННЯ UI ТА ЗБЕРЕЖЕННЯ (LocalStorage)
+        function saveAndRender() {
+            localStorage.setItem('estimateData', JSON.stringify(estimateData));
             updateEstimateUI();
         }
 
-        // Функція оновлення інтерфейсу кошторису
+        function clearEstimate() {
+            if(confirm("Opravdu chcete vymazat celý rozpočet?")) {
+                estimateData = {};
+                saveAndRender();
+            }
+        }
+
         function updateEstimateUI() {
             const listEl = document.getElementById('estimateList');
-            listEl.innerHTML = ''; // Очистити поточний список
-            worksTotal = 0;
-            materialsTotal = 0;
-
+            listEl.innerHTML = '';
+            
+            let worksTotal = 0;
+            let materialsTotal = 0;
             let hasItems = false;
 
             for (const category in estimateData) {
+                if (estimateData[category].length === 0) continue;
                 hasItems = true;
-                const items = estimateData[category];
-                if (items.length === 0) continue;
 
-                let categorySum = 0;
-
-                // Створення блоку категорії
-                const categoryBlock = document.createElement('li');
-                categoryBlock.className = 'estimate-category-block';
-
-                let html = `<div class="estimate-category-title">${category}</div>`;
-
-                // Додавання робіт
-                items.forEach(item => {
-                    categorySum += item.sum;
-                    html += `
+                let categoryHtml = `<div class="estimate-category-title">${catalog[category] ? catalog[category].icon : ''} ${category}</div>`;
+                
+                estimateData[category].forEach(item => {
+                    categoryHtml += `
                         <div class="estimate-item">
-                            <span>${item.name} (${item.qty} ${item.unit})</span>
-                            <span class="estimate-item-sum">${item.sum.toFixed(0)} CZK</span>
+                            <div>${item.name} <span class="unit-label">(${item.qty} ${item.unit} x ${item.price} CZK)</span></div>
+                            <div class="estimate-item-sum">${item.sum.toLocaleString('cs-CZ')} CZK</div>
+                            <div class="delete-btn" onclick="removeItem('${category}', ${item.id})" title="Smazat" data-html2canvas-ignore="true">×</div>
                         </div>
                     `;
+                    if (category === "Materiály") {
+                        materialsTotal += item.sum;
+                    } else {
+                        worksTotal += item.sum;
+                    }
                 });
-
-                // Розрахунок підсумків (тут демо, вважаємо все роботами, крім категорії '📦 Матеріали')
-                if(category.includes('📦')) {
-                    materialsTotal += categorySum;
-                } else {
-                    worksTotal += categorySum;
-                }
-
-                categoryBlock.innerHTML = html;
-                listEl.appendChild(categoryBlock);
+                
+                const li = document.createElement('li');
+                li.innerHTML = categoryHtml;
+                listEl.appendChild(li);
             }
 
             if (!hasItems) {
-                listEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding-top: 30px;">Кошторис порожній</p>';
+                listEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding-top: 30px;">Rozpočet je prázdný</p>';
             }
 
-            // Оновлення підсумкових сум
-            document.getElementById('totalWorks').innerText = `${worksTotal.toFixed(0)} CZK`;
-            document.getElementById('totalMaterials').innerText = `${materialsTotal.toFixed(0)} CZK`;
-            document.getElementById('grandTotal').innerText = `${(worksTotal + materialsTotal).toFixed(0)} CZK`;
+            document.getElementById('totalWorks').innerText = `${worksTotal.toLocaleString('cs-CZ')} CZK`;
+            document.getElementById('totalMaterials').innerText = `${materialsTotal.toLocaleString('cs-CZ')} CZK`;
+            document.getElementById('grandTotal').innerText = `${(worksTotal + materialsTotal).toLocaleString('cs-CZ')} CZK`;
         }
+
+        // 6. ЕКСПОРТ В PDF (Використання html2pdf.js)
+        function exportToPDF() {
+            // Беремо HTML блок, який хочемо зберегти
+            const element = document.getElementById('pdf-content');
+            
+            // Налаштування для PDF
+            const opt = {
+                margin:       10,
+                filename:     `Rozpocet_Rekonstrukce_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 }, // Підвищує якість
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Генерація (елементи з data-html2canvas-ignore="true" (хрестики видалення) не потраплять у PDF)
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Запуск
+        initApp();
     </script>
 </body>
 </html>
